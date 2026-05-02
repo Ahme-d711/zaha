@@ -130,7 +130,11 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
  * Reset Password Request Schema (for forgot password)
  */
 export const resetPasswordRequestSchema = z.object({
-  phone: phoneSchema.refine((val) => val && val.length > 0, "Phone number is required"),
+  email: emailSchema.optional(),
+  phone: phoneSchema.optional(),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 export type ResetPasswordRequestInput = z.infer<typeof resetPasswordRequestSchema>;
@@ -140,7 +144,8 @@ export type ResetPasswordRequestInput = z.infer<typeof resetPasswordRequestSchem
  */
 export const resetPasswordSchema = z
   .object({
-    phone: phoneSchema.refine((val) => val && val.length > 0, "Phone number is required"),
+    email: emailSchema.optional(),
+    phone: phoneSchema.optional(),
     code: z.string().min(4, "Code is required").max(6, "Code must be 6 digits"),
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Password confirmation is required"),
@@ -156,8 +161,12 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
  * Verify Phone Schema
  */
 export const verifyPhoneSchema = z.object({
-  phone: phoneSchema,
+  email: emailSchema.optional(),
+  phone: phoneSchema.optional(),
   code: z.string().min(4, "Verification code must be at least 4 digits").max(6, "Verification code must be at most 6 digits"),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 export type VerifyPhoneInput = z.infer<typeof verifyPhoneSchema>;
@@ -166,7 +175,11 @@ export type VerifyPhoneInput = z.infer<typeof verifyPhoneSchema>;
  * Resend Verification Code Schema (via SMS)
  */
 export const resendVerificationSchema = z.object({
-  phone: phoneSchema,
+  email: emailSchema.optional(),
+  phone: phoneSchema.optional(),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;

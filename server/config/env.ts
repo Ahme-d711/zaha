@@ -15,6 +15,8 @@ export const env = {
   defaultAdminName: process.env.DEFAULT_ADMIN_NAME || "Super Admin",
   useHttps: process.env.USE_HTTPS === "true",
   cookieHttpOnly: process.env.COOKIE_HTTP_ONLY === "true",
+  resendApiKey: process.env.RESEND_API_KEY || "re_No9QyGNq_NrSoTXi9ikKj5uhWc8bp1eyZ",
+  adminEmail: process.env.ADMIN_EMAIL || "elgedawyahmed333@gmail.com",
 };
 
 

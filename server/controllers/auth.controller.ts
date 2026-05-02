@@ -20,7 +20,6 @@ import {
 import { asyncHandler } from "../utils/asyncHandler.js";
 import type { IUser } from "../types/user.type.js";
 import { generateToken, extractTokenFromRequest, verifyToken } from "../utils/jwt.utils.js";
-import { sendVerificationWhatsApp } from "../utils/whatsapp.service.js";
 import { getRelativePath } from "../utils/upload.js";
 import { TOKEN_KEY } from "../utils/constants.js";
 
@@ -86,28 +85,27 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
   const validatedData = validateAuthData(registerSchema, req.body);
 
-  // Check if user already exists
-  const existingUser = await UserModel.findOne({
+  // Clean phone number (strip + if exists)
+  const phone = validatedData.phone.replace(/^\+/, "");
+
+  // Check if user already exists by email
+  const existingEmail = await UserModel.findOne({
     email: validatedData.email,
   });
 
-  if (existingUser) {
+  if (existingEmail) {
     throw new AppError("User with this email already exists", 409);
+  }
+
+  // Check if phone already exists
+  const existingPhone = await UserModel.findOne({ phone });
+
+  if (existingPhone) {
+    throw new AppError("User with this phone number already exists", 409);
   }
 
   // Hash password
   const hashedPassword = await bcrypt.hash(validatedData.password, 10);
-
-  // Check if phone already exists
-  if (validatedData.phone) {
-    const existingPhone = await UserModel.findOne({
-      phone: validatedData.phone,
-    });
-
-    if (existingPhone) {
-      throw new AppError("User with this phone number already exists", 409);
-    }
-  }
 
   // Generate verification code
   const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -118,23 +116,16 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     name: validatedData.name,
     email: validatedData.email,
     password: hashedPassword,
-    phone: validatedData.phone ? validatedData.phone.replace(/^\+/, "") : undefined,
+    phone,
     picture: validatedData.picture,
     gender: validatedData.gender,
-    role: validatedData.role,
+    role: validatedData.role || "user",
     isActive: true,
-    isVerified: false,
-    verificationCode,
-    verificationCodeExpires,
+    isVerified: true, // Auto-verify users
   });
 
-  // Send verification code via WhatsApp if phone exists
-  if (user.phone) {
-    await sendVerificationWhatsApp(user.phone, verificationCode);
-  }
-
   // Send authentication response
-  sendAuthResponse(user, res, 201, "Registration successful. Please verify your phone number via WhatsApp.");
+  sendAuthResponse(user, res, 201, "Registration successful.");
 });
 
 /**
@@ -167,13 +158,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError("Your account has been blocked", 403);
   }
 
-  // Check if phone is verified
-  if (user.isVerified === false) {
-    throw new AppError("Please verify your phone number before logging in", 403);
-    }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
+  // Verify password
+  const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       throw new AppError("Invalid login credentials", 401);
@@ -386,30 +372,30 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * Verify phone number with verification code
+ * Verify account with verification code (sent via email)
  */
 export const verifyPhone = asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
-  let { phone, code } = validateAuthData(verifyPhoneSchema, req.body);
+  let { phone, email, code } = validateAuthData(verifyPhoneSchema, req.body);
 
-  // Strip + if exists
-  if (phone) {
-    phone = phone.replace(/^\+/, "");
+  const query: any = { isActive: true };
+  if (email) {
+    query.email = email;
+  } else if (phone) {
+    query.phone = phone.replace(/^\+/, "");
+  } else {
+    throw new AppError("Email or phone number is required", 400);
   }
 
-  // Find user by phone
-  if (!phone) {
-    throw new AppError("Phone number is required", 400);
-  }
-
-  const user = await UserModel.findOne({ phone, isActive: true });
+  // Find user
+  const user = await UserModel.findOne(query);
 
   if (!user) {
-    throw new AppError("Invalid phone number", 400);
+    throw new AppError("User not found", 404);
   }
 
   if (user.isVerified) {
-    throw new AppError("Phone number already verified", 400);
+    throw new AppError("Account is already verified", 400);
   }
 
   // Verify the code
@@ -422,7 +408,7 @@ export const verifyPhone = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError("Verification code has expired", 400);
   }
 
-  // Mark phone as verified and clear the code
+  // Mark user as verified and clear the code
   user.isVerified = true;
   user.verificationCode = undefined;
   user.verificationCodeExpires = undefined;
@@ -430,31 +416,35 @@ export const verifyPhone = asyncHandler(async (req: Request, res: Response) => {
 
   sendResponse(res, 200, {
     success: true,
-    message: "Phone number verified successfully",
+    message: "Account verified successfully",
     data: { user },
   });
 });
 
 /**
- * Resend verification code via SMS
+ * Resend verification code via Email
  */
 export const resendVerification = asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
-  let { phone } = validateAuthData(resendVerificationSchema, req.body);
+  let { phone, email } = validateAuthData(resendVerificationSchema, req.body);
 
-  // Strip + if exists
-  if (phone) {
-    phone = phone.replace(/^\+/, "");
+  const query: any = { isActive: true };
+  if (email) {
+    query.email = email;
+  } else if (phone) {
+    query.phone = phone.replace(/^\+/, "");
+  } else {
+    throw new AppError("Email or phone number is required", 400);
   }
 
-  const user = await UserModel.findOne({ phone, isActive: true });
+  const user = await UserModel.findOne(query);
 
   if (!user) {
-    throw new AppError("Invalid phone number or account not found", 404);
+    throw new AppError("User not found", 404);
   }
 
   if (user.isVerified) {
-    throw new AppError("Phone number is already verified", 400);
+    throw new AppError("Account is already verified", 400);
   }
 
   // Generate new verification code
@@ -466,34 +456,37 @@ export const resendVerification = asyncHandler(async (req: Request, res: Respons
   user.verificationCodeExpires = verificationCodeExpires;
   await user.save();
 
-  // Send verification code via WhatsApp
-  await sendVerificationWhatsApp(phone as string, verificationCode);
+  // Send verification code via Email (Disabled as per request)
+  // await sendVerificationEmail(user.email, verificationCode);
+  console.log(`Verification code for ${user.email}: ${verificationCode}`);
 
   sendResponse(res, 200, {
     success: true,
-    message: "Verification code has been sent via WhatsApp",
+    message: "Verification code has been sent to your email",
   });
 });
 
 /**
- * Forgot password - Send OTP via WhatsApp
+ * Forgot password - Send code via Email
  */
 export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
-  let { phone } = validateAuthData(resetPasswordRequestSchema, req.body);
+  let { phone, email } = validateAuthData(resetPasswordRequestSchema, req.body);
 
-  // Strip + if exists
-  if (phone) {
-    phone = phone.replace(/^\+/, "");
+  const query: any = { isActive: true };
+  if (email) {
+    query.email = email;
+  } else if (phone) {
+    query.phone = phone.replace(/^\+/, "");
   }
 
-  const user = await UserModel.findOne({ phone, isActive: true });
+  const user = await UserModel.findOne(query);
 
   if (!user) {
     // Return success even if user not found to prevent user enumeration
     return sendResponse(res, 200, {
       success: true,
-      message: "If an account exists with this number, a verification code has been sent via WhatsApp",
+      message: "If an account exists, a verification code has been sent to the registered email",
     });
   }
 
@@ -506,12 +499,13 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
   user.resetPasswordCodeExpires = resetCodeExpires;
   await user.save();
 
-  // Send verification code via WhatsApp
-  await sendVerificationWhatsApp(phone as string, resetCode);
+  // Send verification code via Email (Disabled as per request to remove email system)
+  // await sendResetPasswordEmail(user.email, resetCode);
+  console.log(`Reset code for ${user.email}: ${resetCode}`);
 
   sendResponse(res, 200, {
     success: true,
-    message: "If an account exists with this number, a verification code has been sent via WhatsApp",
+    message: "If an account exists, a verification code has been sent to your email",
   });
 });
 
@@ -520,19 +514,21 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
  */
 export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
-  let { phone, code, password } = validateAuthData(resetPasswordSchema, req.body);
+  let { phone, email, code, password } = validateAuthData(resetPasswordSchema, req.body);
 
-  // Strip + if exists
-  if (phone) {
-    phone = phone.replace(/^\+/, "");
-  }
-
-  const user = await UserModel.findOne({ 
-    phone, 
+  const query: any = { 
     isActive: true,
     resetPasswordCode: code,
     resetPasswordCodeExpires: { $gt: new Date() }
-  });
+  };
+
+  if (email) {
+    query.email = email;
+  } else if (phone) {
+    query.phone = phone.replace(/^\+/, "");
+  }
+
+  const user = await UserModel.findOne(query);
 
   if (!user) {
     throw new AppError("Invalid or expired verification code", 400);

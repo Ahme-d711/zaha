@@ -56,7 +56,7 @@ export const router = Router();
  *                 enum: [male, female]
  *     responses:
  *       201:
- *         description: User registered successfully. A verification code has been sent via WhatsApp.
+ *         description: User registered successfully. A verification code has been sent via Email.
  *       400:
  *         description: Invalid input
  */
@@ -120,9 +120,9 @@ router.get("/check-auth", checkAuth);
 
 /**
  * @swagger
- * /auth/verify-phone:
+ * /auth/verify:
  *   post:
- *     summary: Verify user phone number via WhatsApp OTP
+ *     summary: Verify user account via Email OTP
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -130,25 +130,28 @@ router.get("/check-auth", checkAuth);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - phone
- *               - code
  *             properties:
+ *               email:
+ *                 type: string
  *               phone:
  *                 type: string
  *               code:
  *                 type: string
+ *                 required: true
  *     responses:
  *       200:
- *         description: Phone verified successfully
+ *         description: Account verified successfully
  */
+router.post("/verify", verifyPhone);
+
+// Keep old route for backward compatibility if needed, pointing to same controller
 router.post("/verify-phone", verifyPhone);
 
 /**
  * @swagger
  * /auth/resend-verification:
  *   post:
- *     summary: Resend phone verification code via WhatsApp
+ *     summary: Resend verification code via Email
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -156,9 +159,9 @@ router.post("/verify-phone", verifyPhone);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - phone
  *             properties:
+ *               email:
+ *                 type: string
  *               phone:
  *                 type: string
  *     responses:
@@ -171,7 +174,7 @@ router.post("/resend-verification", resendVerification);
  * @swagger
  * /auth/forgot-password:
  *   post:
- *     summary: Request password reset (OTP via WhatsApp)
+ *     summary: Request password reset (Code via Email)
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -179,9 +182,9 @@ router.post("/resend-verification", resendVerification);
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - phone
  *             properties:
+ *               email:
+ *                 type: string
  *               phone:
  *                 type: string
  *     responses:
@@ -194,7 +197,7 @@ router.post("/forgot-password", forgotPassword);
  * @swagger
  * /auth/reset-password:
  *   post:
- *     summary: Reset password using OTP
+ *     summary: Reset password using code from Email
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -203,11 +206,12 @@ router.post("/forgot-password", forgotPassword);
  *           schema:
  *             type: object
  *             required:
- *               - phone
  *               - code
  *               - password
  *               - confirmPassword
  *             properties:
+ *               email:
+ *                 type: string
  *               phone:
  *                 type: string
  *               code:
