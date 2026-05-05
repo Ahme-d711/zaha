@@ -96,6 +96,10 @@ export const dashboardManagementService = {
     );
   },
 
+  deleteProduct: async (id: string) => {
+    return apiClient.delete<unknown, ApiResponse<null>>(`${ENDPOINTS.PRODUCTS.BASE}/${id}`);
+  },
+
   getUsers: async (params?: { search?: string; page?: number; limit?: number }) => {
     return apiClient.get<
       unknown,
@@ -146,6 +150,10 @@ export const dashboardManagementService = {
       payload,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
+  },
+
+  deleteCategory: async (id: string) => {
+    return apiClient.delete<unknown, ApiResponse<null>>(`${ENDPOINTS.CATEGORIES.LIST}/${id}`);
   },
 
   getOrders: async (params?: { search?: string; page?: number; limit?: number; status?: string }) => {

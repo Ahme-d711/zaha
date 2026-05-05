@@ -22,6 +22,8 @@ interface ProductsTableProps {
   onSearchChange: (value: string) => void;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  deletingId?: string | null;
   getCategoryLabel: (categoryId?: string | { _id?: string; name?: string; nameEn?: string }) => string;
 }
 
@@ -33,6 +35,8 @@ export const ProductsTable = ({
   onSearchChange,
   onView,
   onEdit,
+  onDelete,
+  deletingId,
   getCategoryLabel,
 }: ProductsTableProps) => {
   return (
@@ -129,8 +133,17 @@ export const ProductsTable = ({
                           <Edit className="w-4 h-4 mr-2" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="w-4 h-4 mr-2" /> Delete
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          disabled={deletingId === product._id}
+                          onSelect={() => onDelete(product._id)}
+                        >
+                          {deletingId === product._id ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 mr-2" />
+                          )}
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

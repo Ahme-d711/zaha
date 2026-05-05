@@ -1,6 +1,8 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { dashboardManagementService } from "@/api/dashboard-management.service";
 import { CategoriesGrid } from "../components/CategoriesGrid";
 import { CategoriesHeader } from "../components/CategoriesHeader";
@@ -26,6 +28,8 @@ export const CategoriesPage = () => {
   const [viewOpen, setViewOpen] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [form, setForm] = useState<CategoryFormState>(defaultCategoryFormState);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [categoryIdPendingDelete, setCategoryIdPendingDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
@@ -45,7 +49,12 @@ export const CategoriesPage = () => {
       setAddOpen(false);
       setImageFile(null);
       setForm(defaultCategoryFormState);
+      toast.success("Category created");
       queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["all-categories"] });
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      toast.error(error.response?.data?.message ?? "Failed to create category");
     },
   });
 
@@ -54,14 +63,54 @@ export const CategoriesPage = () => {
       dashboardManagementService.updateCategory(id, payload),
     onSuccess: () => {
       setEditOpen(false);
+      setImageFile(null);
+      toast.success("Category updated");
       queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["all-categories"] });
       if (selectedCategoryId) {
         queryClient.invalidateQueries({ queryKey: ["dashboard-category", selectedCategoryId] });
       }
     },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      toast.error(error.response?.data?.message ?? "Failed to update category");
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => dashboardManagementService.deleteCategory(id),
+    onSuccess: (_data, deletedId) => {
+      toast.success("Category deleted");
+      setDeleteConfirmOpen(false);
+      setCategoryIdPendingDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["all-categories"] });
+      queryClient.removeQueries({ queryKey: ["dashboard-category", deletedId] });
+      if (selectedCategoryId === deletedId) {
+        setViewOpen(false);
+        setEditOpen(false);
+        setSelectedCategoryId(null);
+      }
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      toast.error(error.response?.data?.message ?? "Failed to delete category");
+    },
   });
 
   const categories = data?.data?.categories ?? [];
+
+  const editingCategoryImage =
+    categories.find((c) => c._id === selectedCategoryId)?.image ?? "";
+
+  const handleRequestDelete = (id: string) => {
+    setCategoryIdPendingDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteCategory = () => {
+    if (categoryIdPendingDelete) {
+      deleteCategoryMutation.mutate(categoryIdPendingDelete);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -80,6 +129,7 @@ export const CategoriesPage = () => {
           onEdit={(id) => {
             const current = categories.find((c) => c._id === id);
             if (!current) return;
+            setImageFile(null);
             setForm({
               name: (current as { name?: string; nameEn?: string }).name ?? current.nameEn ?? "",
               description:
@@ -92,6 +142,8 @@ export const CategoriesPage = () => {
             setSelectedCategoryId(id);
             setEditOpen(true);
           }}
+          onDelete={handleRequestDelete}
+          deletingId={deleteCategoryMutation.isPending ? deleteCategoryMutation.variables : null}
         />
       </div>
 
@@ -102,9 +154,30 @@ export const CategoriesPage = () => {
         category={selectedCategoryQuery.data?.data.category}
       />
 
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(open) => {
+          setDeleteConfirmOpen(open);
+          if (!open) setCategoryIdPendingDelete(null);
+        }}
+        title="Delete this category?"
+        description="It will be hidden from the catalog. Products already in this category are unchanged; reassign them if needed."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={deleteCategoryMutation.isPending}
+        onConfirm={confirmDeleteCategory}
+      />
+
       <CategoryFormDialog
         open={addOpen}
-        onOpenChange={setAddOpen}
+        onOpenChange={(open) => {
+          setAddOpen(open);
+          if (!open) {
+            setImageFile(null);
+            setForm(defaultCategoryFormState);
+          }
+        }}
         title="Add Category"
         description="Create a new category."
         form={form}
@@ -117,7 +190,10 @@ export const CategoriesPage = () => {
 
       <CategoryFormDialog
         open={editOpen}
-        onOpenChange={setEditOpen}
+        onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) setImageFile(null);
+        }}
         title="Edit Category"
         description="Update selected category."
         form={form}
@@ -128,7 +204,8 @@ export const CategoriesPage = () => {
           selectedCategoryId &&
           updateCategoryMutation.mutate({ id: selectedCategoryId, payload: toPayload(form, imageFile) })
         }
-        minimal
+        onImageChange={setImageFile}
+        existingImageUrl={editOpen ? editingCategoryImage : undefined}
       />
     </DashboardLayout>
   );

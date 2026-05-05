@@ -38,12 +38,6 @@ export const ENDPOINTS = {
     LIST: '/products',
     DETAILS: (id: string) => `/products/${id}`,
   },
-  VENDOR: {
-    TOP: '/vendor/top',
-    STATS: '/vendor/stats',
-    PRODUCTS: '/vendor/products',
-    ORDERS: '/vendor/orders',
-  },
   WISHLIST: {
     BASE: '/wishlist',
     TOGGLE: '/wishlist/toggle',

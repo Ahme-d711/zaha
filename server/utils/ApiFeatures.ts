@@ -42,7 +42,7 @@ class ApiFeatures<T extends Document> {
   filter(): this {
     const queryObj: Record<string, unknown> = { ...this.queryParams };
     
-    // Remove pagination, search and sort fields
+    // Remove pagination, search and sort fields (categoryId is a real filter)
     const excluded = ['page', 'limit', 'search', 'sort'] as const;
     excluded.forEach((field) => delete queryObj[field]);
 
@@ -123,6 +123,7 @@ class ApiFeatures<T extends Document> {
       if (sortBy === 'newest') sortBy = '-createdAt';
       if (sortBy === 'priceLowHigh') sortBy = 'price';
       if (sortBy === 'priceHighLow') sortBy = '-price';
+      if (sortBy === 'featured') sortBy = '-is_best_seller -createdAt';
 
       this.query = this.query.sort(sortBy);
     } else {

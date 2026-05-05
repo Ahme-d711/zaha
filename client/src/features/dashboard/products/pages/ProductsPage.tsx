@@ -1,12 +1,14 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { dashboardManagementService } from "@/api/dashboard-management.service";
 import { ProductDetailsDialog } from "../components/ProductDetailsDialog";
 import { ProductFormDialog } from "../components/ProductFormDialog";
 import { ProductsHeader } from "../components/ProductsHeader";
 import { ProductsTable } from "../components/ProductsTable";
 import { ProductFormState, defaultProductFormState } from "../components/products.types";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const toPayload = (form: ProductFormState, mainImageFile: File | null, galleryFiles: File[], id?: string) => {
   const discountPercentage =
@@ -67,6 +69,8 @@ export const ProductsPage = () => {
   const [existingMainImageUrl, setExistingMainImageUrl] = useState<string>("");
   const [existingGalleryImageUrls, setExistingGalleryImageUrls] = useState<string[]>([]);
   const [form, setForm] = useState<ProductFormState>(defaultProductFormState);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [productIdPendingDelete, setProductIdPendingDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
@@ -100,6 +104,36 @@ export const ProductsPage = () => {
       }
     },
   });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: string) => dashboardManagementService.deleteProduct(id),
+    onSuccess: (_data, deletedId) => {
+      toast.success("Product deleted successfully");
+      setDeleteConfirmOpen(false);
+      setProductIdPendingDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["dashboard-products"] });
+      queryClient.removeQueries({ queryKey: ["dashboard-product", deletedId] });
+      if (selectedProductId === deletedId) {
+        setViewOpen(false);
+        setEditOpen(false);
+        setSelectedProductId(null);
+      }
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      toast.error(error.response?.data?.message ?? "Failed to delete product");
+    },
+  });
+
+  const handleDeleteProduct = (id: string) => {
+    setProductIdPendingDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteProduct = () => {
+    if (productIdPendingDelete) {
+      deleteProductMutation.mutate(productIdPendingDelete);
+    }
+  };
 
   const products = data?.data?.products ?? [];
   const categories = categoriesQuery.data?.data?.categories ?? [];
@@ -225,6 +259,8 @@ export const ProductsPage = () => {
           onSearchChange={setSearch}
           onView={openViewDialog}
           onEdit={openEditDialog}
+          onDelete={handleDeleteProduct}
+          deletingId={deleteProductMutation.isPending ? deleteProductMutation.variables : null}
           getCategoryLabel={getCategoryLabel}
         />
       </div>
@@ -252,6 +288,21 @@ export const ProductsPage = () => {
         showMainImageField
         existingMainImageUrl=""
         existingGalleryImageUrls={[]}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(open) => {
+          setDeleteConfirmOpen(open);
+          if (!open) setProductIdPendingDelete(null);
+        }}
+        title="Delete this product?"
+        description="It will be removed from the catalog. You can restore it from the server if needed."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={deleteProductMutation.isPending}
+        onConfirm={confirmDeleteProduct}
       />
 
       <ProductFormDialog

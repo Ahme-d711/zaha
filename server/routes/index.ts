@@ -10,7 +10,6 @@ import wishlistRouter from "./wishlist.route.js";
 import reviewRouter from "./review.route.js";
 
 import settingsRoutes from "./settings.route.js";
-import vendorRoutes from "./vendor.route.js";
 
 const router = Router();
 
@@ -20,7 +19,6 @@ router.use("/categories", categoryRoutes);
 router.use("/products", productRoutes);
 router.use("/orders", orderRoutes);
 router.use("/dashboard", dashboardRoutes);
-router.use("/vendor", vendorRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/cart", cartRouter);
 router.use("/wishlist", wishlistRouter);

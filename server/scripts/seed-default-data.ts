@@ -193,6 +193,36 @@ async function ensureProductSeedImage(productId: string, webPath: string) {
   }
 }
 
+/** Lorem Flickr tags by category slug — demo imagery only */
+const SEED_CATEGORY_IMAGE_TAGS: Record<string, string> = {
+  headphones: "headphones,audio",
+  speakers: "speaker,sound",
+  "smart-watches": "smartwatch,watch",
+  gaming: "gaming,keyboard",
+  accessories: "gadgets,mobile",
+};
+
+function buildSeedCategoryImageUrl(slug: string) {
+  const tags = SEED_CATEGORY_IMAGE_TAGS[slug] ?? "electronics,store";
+  const safeTags = tags.replace(/\s+/g, "");
+  return `https://loremflickr.com/640/640/${safeTags}?lock=${encodeURIComponent(`cat-${slug}`)}`;
+}
+
+async function ensureCategorySeedImage(slug: string, webPath: string) {
+  const dest = resolveUploadsPath(webPath);
+  if (SKIP_IMAGE_DOWNLOAD) {
+    console.warn(`  skip-image-download: leaving ${webPath} unchanged`);
+    return;
+  }
+  try {
+    await downloadToFile(buildSeedCategoryImageUrl(slug), dest);
+  } catch (primaryError) {
+    console.warn(`  Category image primary failed for ${slug}, using fallback.`, primaryError);
+    const url = `https://picsum.photos/seed/zaha-cat-${slug}/640/640`;
+    await downloadToFile(url, dest);
+  }
+}
+
 async function seed() {
   await connectDatabase();
   console.log(`Connected to DB. Reset mode: ${RESET_MODE ? "ON" : "OFF"}`);
@@ -234,9 +264,11 @@ async function seed() {
   const categoriesByName = new Map<string, any>();
   for (const cat of categoriesSeed) {
     const slug = toSlug(cat.name);
+    const imageWeb = `/uploads/categories/${slug}.jpg`;
+    await ensureCategorySeedImage(slug, imageWeb);
     const category = await CategoryModel.findOneAndUpdate(
       { name: cat.name },
-      { ...cat, slug, isShow: true, isDeleted: false },
+      { ...cat, slug, image: imageWeb, isShow: true, isDeleted: false },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
     categoriesByName.set(cat.name, category);

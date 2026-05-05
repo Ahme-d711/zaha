@@ -20,7 +20,7 @@ export const getAllCategories = asyncHandler(async (req: Request, res: Response)
   const validatedQuery = validateUserData(getCategoriesQuerySchema, req.query);
   
   // No default isDeleted filter here. ApiFeatures.filter() will handle it if provided.
-  const query = CategoryModel.find()
+  const query = CategoryModel.find({ isDeleted: false })
     // subcategories model is currently not registered in this codebase,
     // so keep categories list resilient by skipping this populate.
     .populate("productsCount")
@@ -53,7 +53,7 @@ export const getCategoryById = asyncHandler(async (req: Request, res: Response) 
     throw new AppError("Invalid Category ID format", 400);
   }
   
-  const category = await CategoryModel.findById(id);
+  const category = await CategoryModel.findOne({ _id: id, isDeleted: false });
 
   if (!category) {
     throw new AppError("Category not found", 404);

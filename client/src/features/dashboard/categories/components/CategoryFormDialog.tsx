@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { resolveMediaUrl } from "@/lib/media-url";
 import { CategoryFormState } from "./categories.types";
 
 interface CategoryFormDialogProps {
@@ -17,7 +18,8 @@ interface CategoryFormDialogProps {
   submitLabel: string;
   onSubmit: () => void;
   onImageChange?: (file: File | null) => void;
-  minimal?: boolean;
+  /** Shown when editing — current image from API (path or URL) */
+  existingImageUrl?: string;
 }
 
 export const CategoryFormDialog = ({
@@ -31,7 +33,7 @@ export const CategoryFormDialog = ({
   submitLabel,
   onSubmit,
   onImageChange,
-  minimal = false,
+  existingImageUrl,
 }: CategoryFormDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent>
@@ -48,10 +50,17 @@ export const CategoryFormDialog = ({
         <Input type="number" value={form.priority ?? 0} onChange={(e) => setForm((p) => ({ ...p, priority: Number(e.target.value) }))} />
         <Label>Visible</Label>
         <Input type="checkbox" checked={form.isShow ?? false} onChange={(e) => setForm((p) => ({ ...p, isShow: e.target.checked }))} />
-        {!minimal && <>
-          <Label>Category Image</Label>
+        <>
+          <Label>Category image {existingImageUrl ? "(optional — upload to replace)" : ""}</Label>
+          {existingImageUrl ? (
+            <img
+              src={resolveMediaUrl(existingImageUrl)}
+              alt=""
+              className="h-20 w-20 rounded-xl object-cover border border-border/50"
+            />
+          ) : null}
           <Input type="file" accept="image/*" onChange={(e) => onImageChange?.(e.target.files?.[0] ?? null)} />
-        </>}
+        </>
       </div>
       <DialogFooter>
         <Button onClick={onSubmit} disabled={isSubmitting}>

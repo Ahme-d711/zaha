@@ -1,19 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  ShoppingBag, 
-  Settings, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  Users,
+  ShoppingBag,
+  Settings,
+  LogOut,
   ChevronRight,
   TrendingUp,
   Package,
-  Layers
+  Layers,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/use-auth-store";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useLogout } from "@/hooks/use-logout";
 
 const adminMenuItems = [
   { icon: LayoutDashboard, label: "Overview", path: "/dashboard" },
@@ -35,9 +38,22 @@ export const Sidebar = () => {
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const menuItems = isAdmin ? adminMenuItems : vendorMenuItems;
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const logoutMutation = useLogout();
 
   return (
     <div className="w-64 h-screen bg-card border-r border-border flex flex-col sticky top-0">
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        onOpenChange={setLogoutConfirmOpen}
+        title="Sign out?"
+        description="You will need to sign in again to use your account."
+        confirmLabel="Sign out"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={logoutMutation.isPending}
+        onConfirm={() => logoutMutation.mutate()}
+      />
       <div className="p-6">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
@@ -76,8 +92,13 @@ export const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t border-border">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-destructive hover:bg-destructive/10 transition-colors">
-          <LogOut className="w-5 h-5" />
+        <button
+          type="button"
+          disabled={logoutMutation.isPending}
+          onClick={() => setLogoutConfirmOpen(true)}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-60"
+        >
+          {logoutMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
           <span className="font-medium">Logout</span>
         </button>
       </div>

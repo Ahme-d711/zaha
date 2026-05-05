@@ -26,9 +26,6 @@ const DashboardUsers = lazy(() => import("./pages/dashboard/DashboardUsers"));
 const DashboardCategories = lazy(() => import("./pages/dashboard/DashboardCategories"));
 const DashboardOrders = lazy(() => import("./pages/dashboard/DashboardOrders"));
 const DashboardSettings = lazy(() => import("./pages/dashboard/DashboardSettings"));
-const VendorOverview = lazy(() => import("./pages/vendor/VendorOverview"));
-const VendorProducts = lazy(() => import("./pages/vendor/VendorProducts"));
-const VendorOrders = lazy(() => import("./pages/vendor/VendorOrders"));
 const ProtectedRoute = lazy(() => import("./components/auth/ProtectedRoute"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -123,31 +120,6 @@ function AppLayout() {
               element={
                 <ProtectedRoute requireAdmin>
                   <DashboardSettings />
-                </ProtectedRoute>
-              } 
-            />
-            {/* Vendor Routes */}
-            <Route 
-              path="/vendor" 
-              element={
-                <ProtectedRoute>
-                  <VendorOverview />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/vendor/products" 
-              element={
-                <ProtectedRoute>
-                  <VendorProducts />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/vendor/orders" 
-              element={
-                <ProtectedRoute>
-                  <VendorOrders />
                 </ProtectedRoute>
               } 
             />

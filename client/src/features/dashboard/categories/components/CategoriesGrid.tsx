@@ -13,6 +13,8 @@ interface CategoriesGridProps {
   onSearchChange: (value: string) => void;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  deletingId?: string | null;
 }
 
 export const CategoriesGrid = ({
@@ -23,6 +25,8 @@ export const CategoriesGrid = ({
   onSearchChange,
   onView,
   onEdit,
+  onDelete,
+  deletingId,
 }: CategoriesGridProps) => (
   <>
     <div className="relative w-full max-w-sm">
@@ -52,11 +56,24 @@ export const CategoriesGrid = ({
             <div className="flex justify-between items-start mb-6">
               <img src={resolveMediaUrl(category.image)} alt={(category as { name?: string; nameEn?: string }).name ?? category.nameEn} className="w-16 h-16 rounded-2xl object-cover shadow-lg group-hover:scale-105 transition-transform" />
               <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-accent" onClick={() => onEdit(category._id)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-accent"
+                  onClick={() => onEdit(category._id)}
+                >
                   <Edit className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                  <Trash2 className="w-4 h-4" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={deletingId === category._id}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => onDelete(category._id)}
+                >
+                  {deletingId === category._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 </Button>
               </div>
             </div>

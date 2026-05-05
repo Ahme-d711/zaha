@@ -17,10 +17,12 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAuthStore } from "@/store/use-auth-store";
 import { authService } from "@/api/auth.service";
+import { useLogout } from "@/hooks/use-logout";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { resolveMediaUrl } from "@/lib/media-url";
 
 const profileSchema = z.object({
@@ -36,10 +38,10 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
-  const { user, setAuth, clearAuth } = useAuthStore();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const { user, setAuth } = useAuthStore();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -76,21 +78,7 @@ const Profile = () => {
     },
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: () => authService.logout(),
-    onSuccess: () => {
-      clearAuth();
-      queryClient.clear();
-      toast.success("Logged out successfully");
-      navigate("/login");
-    },
-    onError: () => {
-      // Even if API fails, clear local state
-      clearAuth();
-      queryClient.clear();
-      navigate("/login");
-    },
-  });
+  const logoutMutation = useLogout();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -128,6 +116,18 @@ const Profile = () => {
   };
 
   return (
+    <>
+    <ConfirmDialog
+      open={logoutConfirmOpen}
+      onOpenChange={setLogoutConfirmOpen}
+      title="Sign out?"
+      description="You will need to sign in again to use your account."
+      confirmLabel="Sign out"
+      cancelLabel="Cancel"
+      variant="destructive"
+      isLoading={logoutMutation.isPending}
+      onConfirm={() => logoutMutation.mutate()}
+    />
     <div className="min-h-[calc(100vh-80px)] section-padding py-12 bg-background/50">
       <motion.div
         variants={containerVariants}
@@ -186,7 +186,8 @@ const Profile = () => {
                 <div className="w-full pt-8">
                    <Button 
                     variant="outline" 
-                    onClick={() => logoutMutation.mutate()}
+                    type="button"
+                    onClick={() => setLogoutConfirmOpen(true)}
                     disabled={logoutMutation.isPending}
                     className="w-full flex items-center gap-2 border-destructive/20 text-destructive hover:bg-destructive/10"
                   >
@@ -360,6 +361,7 @@ const Profile = () => {
         </div>
       </motion.div>
     </div>
+    </>
   );
 };
 

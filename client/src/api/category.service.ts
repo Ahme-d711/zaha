@@ -4,7 +4,7 @@ import { ApiResponse } from "@/types/api";
 import { CategoryListItem } from "./dashboard-management.service";
 
 export const categoryService = {
-  getAll: async (params?: { search?: string }) => {
+  getAll: async (params?: { search?: string; page?: number; limit?: number }) => {
     return apiClient.get<
       unknown,
       ApiResponse<{ categories: CategoryListItem[] }>
