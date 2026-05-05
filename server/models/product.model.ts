@@ -48,8 +48,6 @@ import { slugify } from "../utils/string.utils.js";
  *           type: string
  *         subCategoryId:
  *           type: string
- *         brandId:
- *           type: string
  *         sectionIds:
  *           type: array
  *           items:

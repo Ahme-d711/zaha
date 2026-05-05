@@ -2,7 +2,6 @@ import { Router } from "express";
 import { router as authRoutes } from "./auth.route.js";
 import { router as userRoutes } from "./user.route.js";
 import { router as categoryRoutes } from "./category.route.js";
-import { router as brandRoutes } from "./brand.route.js";
 import { router as productRoutes } from "./product.route.js";
 import { orderRouter as orderRoutes } from "./order.route.js";
 import dashboardRoutes from "./dashboard.route.js";
@@ -11,16 +10,17 @@ import wishlistRouter from "./wishlist.route.js";
 import reviewRouter from "./review.route.js";
 
 import settingsRoutes from "./settings.route.js";
+import vendorRoutes from "./vendor.route.js";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/categories", categoryRoutes);
-router.use("/brands", brandRoutes);
 router.use("/products", productRoutes);
 router.use("/orders", orderRoutes);
 router.use("/dashboard", dashboardRoutes);
+router.use("/vendor", vendorRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/cart", cartRouter);
 router.use("/wishlist", wishlistRouter);
