@@ -1,10 +1,13 @@
 import { Router } from "express";
-import { getVendorStats, getVendorProducts, getVendorOrders } from "../controllers/vendor.controller.js";
+import { getVendorStats, getVendorProducts, getVendorOrders, getTopVendors } from "../controllers/vendor.controller.js";
 import { authenticate, authorize } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// All vendor routes require authentication and vendor role
+// Public routes
+router.get("/top", getTopVendors);
+
+// All vendor routes below require authentication and vendor role
 router.use(authenticate);
 router.use(authorize("vendor", "admin", "super_admin")); // Admins can also see vendor-like views if needed
 

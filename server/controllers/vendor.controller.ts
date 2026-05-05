@@ -101,3 +101,21 @@ export const getVendorOrders = asyncHandler(async (req: Request, res: Response) 
     data: { orders },
   });
 });
+
+/**
+ * Get top vendors (public endpoint)
+ */
+export const getTopVendors = asyncHandler(async (req: Request, res: Response) => {
+  const { UserModel } = await import("../models/user.model.js");
+  
+  const topVendors = await UserModel.find({ role: "vendor", isActive: true })
+    .select("name picture totalOrders createdAt")
+    .sort({ totalOrders: -1 })
+    .limit(4);
+
+  sendResponse(res, 200, {
+    success: true,
+    message: "Top vendors retrieved successfully",
+    data: { vendors: topVendors },
+  });
+});

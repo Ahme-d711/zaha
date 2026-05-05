@@ -337,7 +337,7 @@ export const checkout = async (req: Request, res: Response) => {
   // 1. Get User Cart
   const cart = await CartModel.findOne({ userId }).populate({
     path: "items.productId",
-    select: "nameAr nameEn price stock isShow isDeleted mainImage sizes",
+    select: "name nameEn nameAr price stock isShow isDeleted images mainImage sizes",
   });
 
   if (!cart || cart.items.length === 0) {
@@ -351,30 +351,32 @@ export const checkout = async (req: Request, res: Response) => {
   for (const item of cart.items) {
     const product = item.productId as unknown as IProduct; // Populated product
 
-    if (!product || product.isDeleted || !product.isShow) {
-      throw new AppError(`Product ${product?.nameEn || "unknown"} is no longer available`, 400);
-    }
-
-    if (product.stock < item.quantity) {
-      throw new AppError(`Product ${product.nameEn} only has ${product.stock} items in stock`, 400);
+    const productName = product?.name || product?.nameEn || product?.nameAr || "unknown";
+    if (!product || product.isDeleted || product.isShow === false) {
+      throw new AppError(`Product ${productName} is no longer available`, 400);
     }
 
     // Determine price based on size if size is selected
     let unitPrice = product.price;
+    let availableStock = product.stock;
     if (item.size && product.sizes && product.sizes.length > 0) {
       const sizeObj = product.sizes.find((s) => s.size === item.size);
       if (sizeObj) {
         unitPrice = sizeObj.price;
+        availableStock = sizeObj.stock;
       }
+    }
+    if (availableStock < item.quantity) {
+      throw new AppError(`Product ${productName} only has ${availableStock} items in stock`, 400);
     }
 
     subtotal += unitPrice * item.quantity;
     orderItems.push({
       productId: product._id,
-      name: product.nameEn, // Using English name for order record
+      name: productName,
       price: unitPrice,
       quantity: item.quantity,
-      image: product.mainImage,
+      image: product.images?.main || product.mainImage,
       size: item.size,
     });
   }
@@ -389,11 +391,11 @@ export const checkout = async (req: Request, res: Response) => {
   const taxAmount = Math.round(subtotal * (settings.taxRate / 100) * 100) / 100;
   const totalAmount = subtotal + shippingCost + taxAmount;
 
-  // 4. Verify Balance
+  // 4. Verify Balance (only for WALLET payment)
   const user = await UserModel.findById(userId);
   if (!user) throw new AppError("User not found", 404);
 
-  if ((user.totalBalance || 0) < totalAmount) {
+  if (validatedBody.paymentMethod === "WALLET" && (user.totalBalance || 0) < totalAmount) {
     throw new AppError(`Insufficient balance. Current balance: ${user.totalBalance}`, 400);
   }
 
@@ -410,19 +412,22 @@ export const checkout = async (req: Request, res: Response) => {
     taxAmount,
     totalAmount,
     trackingNumber,
-    paymentStatus: "PAID", // Since it's from balance
+    paymentMethod: validatedBody.paymentMethod,
+    paymentStatus: validatedBody.paymentMethod === "WALLET" ? "PAID" : "PENDING",
     status: "PENDING",
   });
 
-  // Create Transaction Record
-  await TransactionModel.create({
-    userId,
-    amount: -totalAmount, // Negative for deduction
-    type: "PURCHASE",
-    status: "COMPLETED",
-    description: `Purchase of order ${trackingNumber}`,
-    referenceId: order._id.toString(),
-  });
+  if (validatedBody.paymentMethod === "WALLET") {
+    // Create Transaction Record
+    await TransactionModel.create({
+      userId,
+      amount: -totalAmount, // Negative for deduction
+      type: "PURCHASE",
+      status: "COMPLETED",
+      description: `Purchase of order ${trackingNumber}`,
+      referenceId: order._id.toString(),
+    });
+  }
 
   // User balance is updated via TransactionModel middleware
 

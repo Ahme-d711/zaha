@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Search, Menu, X, User } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, User, Heart } from "lucide-react";
 import { useCart } from "@/features/cart/CartProvider";
 import { ThemeToggle } from "../ThemeToggle";
 import { useAuthStore } from "@/store/use-auth-store";
@@ -57,6 +57,9 @@ export function Header() {
             </button>
             <Link to="/profile" className="p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Account">
               <User className="h-5 w-5 text-muted-foreground" />
+            </Link>
+            <Link to="/wishlist" className="p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Wishlist">
+              <Heart className="h-5 w-5 text-muted-foreground" />
             </Link>
             <Link to="/cart" className="relative p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Cart">
               <ShoppingBag className="h-5 w-5 text-muted-foreground" />

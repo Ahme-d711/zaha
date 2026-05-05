@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Search, ShoppingBag, User } from "lucide-react";
+import { Home, Search, ShoppingBag, User, Heart } from "lucide-react";
 import { useCart } from "@/features/cart/CartProvider";
 
 const tabs = [
   { icon: Home, label: "Home", path: "/" },
   { icon: Search, label: "Shop", path: "/products" },
+  { icon: Heart, label: "Wishlist", path: "/wishlist" },
   { icon: ShoppingBag, label: "Cart", path: "/cart" },
-  { icon: User, label: "Account", path: "/account" },
+  { icon: User, label: "Account", path: "/profile" },
 ];
 
 export function MobileNav() {

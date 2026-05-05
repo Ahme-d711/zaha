@@ -29,6 +29,16 @@ export const authService = {
   resendVerification: async (data: { email?: string; phone?: string }): Promise<ApiResponse<void>> => {
     return apiClient.post<unknown, ApiResponse<void>>(ENDPOINTS.AUTH.RESEND_VERIFICATION, data);
   },
+
+  updateProfile: async (data: FormData): Promise<ApiResponse<{ user: User }>> => {
+    return apiClient.put<unknown, ApiResponse<{ user: User }>>(ENDPOINTS.AUTH.PROFILE, data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  changePassword: async (data: any): Promise<ApiResponse<void>> => {
+    return apiClient.post<unknown, ApiResponse<void>>(ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
+  },
 };
-
-

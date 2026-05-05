@@ -76,7 +76,6 @@ export const OrdersTable = ({
                   <td className="py-4"><Badge variant="secondary" className={`${getOrderStatusColor(order.status)} border-none`}>{order.status}</Badge></td>
                   <td className="py-4 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="View Details" onClick={() => onView(order._id)}><Eye className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" title="Update Status" onClick={() => onEdit(order._id, order.status)}><Truck className="w-4 h-4 text-accent" /></Button>
                     </div>
                   </td>

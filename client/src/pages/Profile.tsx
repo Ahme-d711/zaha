@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { User, Mail, Phone, MapPin, Camera, Save, LogOut, ShoppingBag, Star, Lock } from "lucide-react";
+import { User, Mail, Phone, MapPin, Camera, Save, LogOut, ShoppingBag, Star, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +17,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthStore } from "@/store/use-auth-store";
+import { authService } from "@/api/auth.service";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -29,21 +34,80 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  const { user, setAuth, clearAuth } = useAuthStore();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: "Ahmed Elgedawy",
-      email: "ahmed@example.com",
-      phone: "+20 1018939831",
-      address: "Cairo, Egypt",
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
     },
   });
 
-  const onSubmit = async (data: ProfileFormValues) => {
-    console.log("Profile update:", data);
-    toast.success("Profile updated successfully!");
-    setIsEditing(false);
+  // Update form when user data is available (e.g. after hard refresh)
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        address: user.address || "",
+      });
+    }
+  }, [user, form]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (formData: FormData) => authService.updateProfile(formData),
+    onSuccess: (response) => {
+      setAuth(response.data.user);
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+      setSelectedFile(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: () => authService.logout(),
+    onSuccess: () => {
+      clearAuth();
+      queryClient.clear();
+      toast.success("Logged out successfully");
+      navigate("/login");
+    },
+    onError: () => {
+      // Even if API fails, clear local state
+      clearAuth();
+      queryClient.clear();
+      navigate("/login");
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setIsEditing(true);
+    }
+  };
+
+  const onSubmit = (data: ProfileFormValues) => {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("phone", data.phone);
+    if (data.address) formData.append("address", data.address);
+    if (selectedFile) formData.append("picture", selectedFile);
+
+    updateProfileMutation.mutate(formData);
   };
 
   const containerVariants = {
@@ -78,17 +142,29 @@ const Profile = () => {
               <CardContent className="pt-8 pb-8 flex flex-col items-center">
                 <div className="relative group">
                   <Avatar className="w-32 h-32 border-4 border-accent/20 shadow-xl overflow-hidden">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-accent text-white text-4xl font-bold">
-                      AM
+                    <AvatarImage 
+                      src={selectedFile ? URL.createObjectURL(selectedFile) : user?.picture ? resolveMediaUrl(user.picture) : ""} 
+                    />
+                    <AvatarFallback className="bg-accent text-white text-4xl font-bold uppercase">
+                      {user?.name ? user.name.substring(0, 2) : "AM"}
                     </AvatarFallback>
                   </Avatar>
-                  <button className="absolute bottom-0 right-0 p-2 bg-accent rounded-full text-white shadow-lg hover:bg-accent/90 transition-all scale-0 group-hover:scale-100 origin-bottom-right">
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 p-2 bg-accent rounded-full text-white shadow-lg hover:bg-accent/90 transition-all scale-0 group-hover:scale-100 origin-bottom-right"
+                  >
                     <Camera size={18} />
                   </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
                 </div>
-                <h2 className="text-2xl font-bold font-playfair mt-4 text-foreground">Ahmed Mohamed</h2>
-                <p className="text-muted-foreground">Premium Member</p>
+                <h2 className="text-2xl font-bold font-playfair mt-4 text-foreground">{user?.name || "User Name"}</h2>
+                <p className="text-muted-foreground capitalize">{user?.role?.replace('_', ' ') || "User"}</p>
                 
                 <div className="w-full h-px bg-border/30 my-6" />
                 
@@ -97,19 +173,24 @@ const Profile = () => {
                     <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
                       <ShoppingBag className="w-4 h-4 text-accent" />
                     </div>
-                    <span>12 Orders</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-foreground/70">
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
-                      <Star className="w-4 h-4 text-accent" />
-                    </div>
-                    <span>4 Reviews Written</span>
+                    <span>{user?.totalOrders || 0} Orders</span>
                   </div>
                 </div>
 
+                <div className="w-full pt-6">
+                  <Button asChild variant="outline" className="w-full border-accent/30 text-accent hover:bg-accent/10">
+                    <Link to="/my-orders">My Orders</Link>
+                  </Button>
+                </div>
+
                 <div className="w-full pt-8">
-                   <Button variant="outline" className="w-full flex items-center gap-2 border-destructive/20 text-destructive hover:bg-destructive/10">
-                    <LogOut size={18} />
+                   <Button 
+                    variant="outline" 
+                    onClick={() => logoutMutation.mutate()}
+                    disabled={logoutMutation.isPending}
+                    className="w-full flex items-center gap-2 border-destructive/20 text-destructive hover:bg-destructive/10"
+                  >
+                    {logoutMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <LogOut size={18} />}
                     Sign Out
                   </Button>
                 </div>
@@ -132,8 +213,15 @@ const Profile = () => {
                   </div>
                   <Button 
                     variant={isEditing ? "ghost" : "outline"}
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => {
+                      setIsEditing(!isEditing);
+                      if (isEditing) {
+                        setSelectedFile(null);
+                        form.reset();
+                      }
+                    }}
                     className={isEditing ? "text-muted-foreground" : "border-accent/20 text-accent hover:bg-accent/5"}
+                    disabled={updateProfileMutation.isPending}
                   >
                     {isEditing ? "Cancel" : "Edit Profile"}
                   </Button>
@@ -155,7 +243,7 @@ const Profile = () => {
                             <FormControl>
                               <Input 
                                 {...field} 
-                                disabled={!isEditing}
+                                disabled={!isEditing || updateProfileMutation.isPending}
                                 className="h-11 bg-background/50 border-border/50 focus-visible:ring-accent disabled:opacity-80"
                               />
                             </FormControl>
@@ -175,7 +263,7 @@ const Profile = () => {
                             <FormControl>
                               <Input 
                                 {...field} 
-                                disabled={!isEditing}
+                                disabled={!isEditing || updateProfileMutation.isPending}
                                 className="h-11 bg-background/50 border-border/50 focus-visible:ring-accent disabled:opacity-80"
                               />
                             </FormControl>
@@ -198,7 +286,7 @@ const Profile = () => {
                             <FormControl>
                               <Input 
                                 {...field} 
-                                disabled={!isEditing}
+                                disabled={!isEditing || updateProfileMutation.isPending}
                                 className="h-11 bg-background/50 border-border/50 focus-visible:ring-accent disabled:opacity-80"
                               />
                             </FormControl>
@@ -218,7 +306,8 @@ const Profile = () => {
                             <FormControl>
                               <Input 
                                 {...field} 
-                                disabled={!isEditing}
+                                value={field.value || ""}
+                                disabled={!isEditing || updateProfileMutation.isPending}
                                 className="h-11 bg-background/50 border-border/50 focus-visible:ring-accent disabled:opacity-80"
                               />
                             </FormControl>
@@ -238,9 +327,10 @@ const Profile = () => {
                         >
                           <Button 
                             type="submit" 
+                            disabled={updateProfileMutation.isPending}
                             className="bg-accent hover:bg-accent/90 text-white min-w-[150px] h-11 shadow-lg shadow-accent/20 flex items-center gap-2"
                           >
-                            <Save size={18} />
+                            {updateProfileMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                             Save Changes
                           </Button>
                         </motion.div>

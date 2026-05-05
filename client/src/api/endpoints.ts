@@ -10,6 +10,8 @@ export const ENDPOINTS = {
     ME: '/auth/me',
     VERIFY: '/auth/verify',
     RESEND_VERIFICATION: '/auth/resend-verification',
+    PROFILE: '/auth/profile',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
   DASHBOARD: {
     STATS: '/dashboard/stats',
@@ -17,6 +19,9 @@ export const ENDPOINTS = {
   },
   ORDERS: {
     LIST: '/orders',
+    CHECKOUT: "/orders/checkout",
+    MY_ORDERS: "/orders/my-orders",
+    DETAILS: (id: string) => `/orders/${id}`,
   },
   CATEGORIES: {
     LIST: '/categories',
@@ -34,6 +39,7 @@ export const ENDPOINTS = {
     DETAILS: (id: string) => `/products/${id}`,
   },
   VENDOR: {
+    TOP: '/vendor/top',
     STATS: '/vendor/stats',
     PRODUCTS: '/vendor/products',
     ORDERS: '/vendor/orders',

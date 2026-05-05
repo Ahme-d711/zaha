@@ -21,7 +21,6 @@ const adminMenuItems = [
   { icon: Package, label: "Products", path: "/dashboard/products" },
   { icon: Layers, label: "Categories", path: "/dashboard/categories" },
   { icon: Users, label: "Customers", path: "/dashboard/customers" },
-  { icon: TrendingUp, label: "Analytics", path: "/dashboard/analytics" },
   { icon: Settings, label: "Settings", path: "/dashboard/settings" },
 ];
 
