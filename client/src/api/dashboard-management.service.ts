@@ -28,8 +28,7 @@ export interface UserListItem {
 
 export interface CategoryListItem {
   _id: string;
-  nameEn: string;
-  nameAr: string;
+  name: string;
   descriptionEn?: string;
   descriptionAr?: string;
   priority?: number;

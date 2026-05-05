@@ -60,13 +60,13 @@ export function CategoriesGrid() {
               >
                 <img
                   src={resolveMediaUrl(cat.image)}
-                  alt={cat.nameEn}
+                  alt={cat.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                  <h3 className="text-primary-foreground font-semibold text-lg">{cat.nameEn}</h3>
+                  <h3 className="text-primary-foreground font-semibold text-lg">{cat.name}</h3>
                   <p className="text-primary-foreground/70 text-sm">{cat.productsCount ?? 0} products</p>
                 </div>
               </Link>

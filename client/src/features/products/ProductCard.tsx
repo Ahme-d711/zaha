@@ -53,11 +53,11 @@ export function ProductCard({ product }: ProductCardProps) {
   const productId = product._id || product.id;
   const productName = product.nameEn || product.name;
   const productImage = product.images?.main ? resolveMediaUrl(product.images.main) : (product as any).image;
-  const productPrice = product.price;
-  const productOldPrice = product.old_price || (product as any).originalPrice;
+  const productPrice = product.price || 0;
+  const productOldPrice = product.old_price || (product as any).originalPrice || 0;
   const productRating = product.rating || 0;
   const productReviews = product.reviews_count || (product as any).reviews || 0;
-  const productCategory = typeof product.categoryId === 'object' ? product.categoryId.nameEn : (product as any).category;
+  const productCategory = typeof product.categoryId === 'object' ? product.categoryId?.nameEn : (product as any).category;
   const productBadge = product.is_best_seller ? "Bestseller" : (product as any).badge;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -126,7 +126,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-base">${productPrice.toLocaleString()}</span>
-            {productOldPrice && (
+            {productOldPrice > 0 && (
               <span className="text-xs text-muted-foreground line-through">${productOldPrice.toLocaleString()}</span>
             )}
           </div>

@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -99,6 +100,14 @@ function productImagePath(name: string) {
   return `/uploads/products/${slug}.jpg`;
 }
 
+const GALLERY_SLOT_COUNT = 4;
+
+/** Distinct on-disk paths for gallery (never reuse main). */
+function productGalleryImagePath(name: string, slot: number) {
+  const slug = toSlug(name);
+  return `/uploads/products/${slug}-g${slot}.jpg`;
+}
+
 /**
  * Tag-based demo images (loremflickr) — each product gets a different, stable photo via `lock`.
  * See https://loremflickr.com — suitable for local/dev demos only.
@@ -193,6 +202,42 @@ async function ensureProductSeedImage(productId: string, webPath: string) {
   }
 }
 
+/** Lorem Flickr (theme-consistent) — used if picsum /id/ fails */
+function buildSeedProductGalleryImageUrl(productId: string, slot: number) {
+  const tags = SEED_PRODUCT_IMAGE_TAGS[productId];
+  if (!tags) return null;
+  const varied = `${tags},angle${slot},studio${slot}`;
+  const safeTags = varied.replace(/\s+/g, "");
+  const lock = `${productId}-gallery-${slot}`;
+  return `https://loremflickr.com/900/900/${safeTags}?lock=${encodeURIComponent(lock)}`;
+}
+
+/** Stable unique picsum seeds per product + slot (no /id/ 404s; hashes never collide across g1–g4). */
+function galleryPicsumSeedUrl(productId: string, slot: number): string {
+  const h = crypto.createHash("sha256").update(`${productId}|g|${slot}`).digest("hex").slice(0, 24);
+  return `https://picsum.photos/seed/${h}/900/900`;
+}
+
+async function ensureProductGallerySeedImage(productId: string, slot: number, webPath: string) {
+  const dest = resolveUploadsPath(webPath);
+  if (SKIP_IMAGE_DOWNLOAD) {
+    console.warn(`  skip-image-download: leaving ${webPath} unchanged`);
+    return;
+  }
+  const picsumUrl = galleryPicsumSeedUrl(productId, slot);
+  try {
+    await downloadToFile(picsumUrl, dest);
+  } catch (e) {
+    console.warn(`  Gallery slot ${slot} for ${productId}: picsum failed, trying lorem.`, e);
+    const lorem = buildSeedProductGalleryImageUrl(productId, slot);
+    if (lorem) {
+      await downloadToFile(lorem, dest);
+    } else {
+      await downloadFallbackProductImage(`${productId}-g${slot}`, dest);
+    }
+  }
+}
+
 /** Lorem Flickr tags by category slug — demo imagery only */
 const SEED_CATEGORY_IMAGE_TAGS: Record<string, string> = {
   headphones: "headphones,audio",
@@ -281,6 +326,14 @@ async function seed() {
     const category = categoriesByName.get(p.category);
     const main = productImagePath(p.name);
     await ensureProductSeedImage(p.id, main);
+
+    const gallery: string[] = [];
+    for (let slot = 1; slot <= GALLERY_SLOT_COUNT; slot++) {
+      const gPath = productGalleryImagePath(p.name, slot);
+      await ensureProductGallerySeedImage(p.id, slot, gPath);
+      gallery.push(gPath);
+    }
+
     const product = await ProductModel.findOneAndUpdate(
       { id: p.id },
       {
@@ -293,7 +346,7 @@ async function seed() {
         reviews_count: 0,
         images: {
           main,
-          gallery: [main, main, main].slice(0, 3),
+          gallery,
         },
         stock: p.stock,
         is_best_seller: p.is_best_seller,
