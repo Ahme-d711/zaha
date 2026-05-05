@@ -42,6 +42,130 @@ function PageLoader() {
   );
 }
 
+import { useLocation } from "react-router-dom";
+
+function AppLayout() {
+  const location = useLocation();
+  const isDashboard = location.pathname.startsWith("/dashboard");
+
+  return (
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+        {!isDashboard && <Header />}
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/my-orders"
+              element={
+                <ProtectedRoute>
+                  <MyOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/wishlist" 
+              element={
+                <ProtectedRoute>
+                  <Wishlist />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/products" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DashboardProducts />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/customers" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DashboardUsers />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/categories" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DashboardCategories />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/orders" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DashboardOrders />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/settings" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <DashboardSettings />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Vendor Routes */}
+            <Route 
+              path="/vendor" 
+              element={
+                <ProtectedRoute>
+                  <VendorOverview />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/vendor/products" 
+              element={
+                <ProtectedRoute>
+                  <VendorProducts />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/vendor/orders" 
+              element={
+                <ProtectedRoute>
+                  <VendorOrders />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+        {!isDashboard && (
+          <>
+            <Footer />
+            <MobileNav />
+            <div className="h-16 md:hidden" />
+          </>
+        )}
+      </div>
+    </ThemeProvider>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -49,116 +173,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-            <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-              <Header />
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route
-                    path="/my-orders"
-                    element={
-                      <ProtectedRoute>
-                        <MyOrders />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route 
-                    path="/wishlist" 
-                    element={
-                      <ProtectedRoute>
-                        <Wishlist />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard" 
-                    element={
-                      <ProtectedRoute requireAdmin>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard/products" 
-                    element={
-                      <ProtectedRoute requireAdmin>
-                        <DashboardProducts />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard/customers" 
-                    element={
-                      <ProtectedRoute requireAdmin>
-                        <DashboardUsers />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard/categories" 
-                    element={
-                      <ProtectedRoute requireAdmin>
-                        <DashboardCategories />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard/orders" 
-                    element={
-                      <ProtectedRoute requireAdmin>
-                        <DashboardOrders />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard/settings" 
-                    element={
-                      <ProtectedRoute requireAdmin>
-                        <DashboardSettings />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  {/* Vendor Routes */}
-                  <Route 
-                    path="/vendor" 
-                    element={
-                      <ProtectedRoute>
-                        <VendorOverview />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/vendor/products" 
-                    element={
-                      <ProtectedRoute>
-                        <VendorProducts />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/vendor/orders" 
-                    element={
-                      <ProtectedRoute>
-                        <VendorOrders />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-              <Footer />
-              <MobileNav />
-              <div className="h-16 md:hidden" />
-            </div>
-          </ThemeProvider>
+          <AppLayout />
         </BrowserRouter>
       </CartProvider>
     </TooltipProvider>
@@ -166,3 +181,4 @@ const App = () => (
 );
 
 export default App;
+

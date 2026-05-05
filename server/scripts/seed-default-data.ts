@@ -100,31 +100,28 @@ function productImagePath(name: string) {
 }
 
 /**
- * Curated stock photos (Unsplash) — one distinct image per seeded product.
- * Licensed for use under Unsplash License (https://unsplash.com/license).
+ * Tag-based demo images (loremflickr) — each product gets a different, stable photo via `lock`.
+ * See https://loremflickr.com — suitable for local/dev demos only.
  */
-const SEED_PRODUCT_IMAGE_URLS: Record<string, string> = {
-  prod_001:
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&auto=format&fit=crop&q=80",
-  prod_002:
-    "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=1200&auto=format&fit=crop&q=80",
-  prod_003:
-    "https://images.unsplash.com/photo-1608043152269-423dbba4e7e2?w=1200&auto=format&fit=crop&q=80",
-  prod_004:
-    "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=1200&auto=format&fit=crop&q=80",
-  prod_005:
-    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&auto=format&fit=crop&q=80",
-  prod_006:
-    "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=1200&auto=format&fit=crop&q=80",
-  prod_007:
-    "https://images.unsplash.com/photo-1587829741301-d09d28a84b0d?w=1200&auto=format&fit=crop&q=80",
-  prod_008:
-    "https://images.unsplash.com/photo-1527814050087-3793815479db?w=1200&auto=format&fit=crop&q=80",
-  prod_009:
-    "https://images.unsplash.com/photo-1583863788436-0b1c34d89b8c?w=1200&auto=format&fit=crop&q=80",
-  prod_010:
-    "https://images.unsplash.com/photo-1601784551446-20c9e07cdb56?w=1200&auto=format&fit=crop&q=80",
+const SEED_PRODUCT_IMAGE_TAGS: Record<string, string> = {
+  prod_001: "headphones,wireless",
+  prod_002: "headphones,studio",
+  prod_003: "bluetooth,speaker",
+  prod_004: "speaker,sound",
+  prod_005: "smartwatch",
+  prod_006: "watch,fitness",
+  prod_007: "keyboard,gaming",
+  prod_008: "mouse,gaming",
+  prod_009: "charger,cable",
+  prod_010: "smartphone,case",
 };
+
+function buildSeedProductImageUrl(productId: string) {
+  const tags = SEED_PRODUCT_IMAGE_TAGS[productId];
+  if (!tags) return null;
+  const safeTags = tags.replace(/\s+/g, "");
+  return `https://loremflickr.com/900/900/${safeTags}?lock=${encodeURIComponent(productId)}`;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -178,7 +175,7 @@ async function ensureProductSeedImage(productId: string, webPath: string) {
     console.warn(`  skip-image-download: leaving ${webPath} unchanged`);
     return;
   }
-  const primaryUrl = SEED_PRODUCT_IMAGE_URLS[productId];
+  const primaryUrl = buildSeedProductImageUrl(productId);
   try {
     if (primaryUrl) {
       await downloadToFile(primaryUrl, dest);
