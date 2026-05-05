@@ -33,6 +33,7 @@ export interface IProduct extends Document {
   returns: string;
   slug: string;
   isDeleted: boolean;
+  categoryId: Types.ObjectId | string;
   addedBy: Types.ObjectId | string;
 
   // Legacy compatibility fields used in older controllers.

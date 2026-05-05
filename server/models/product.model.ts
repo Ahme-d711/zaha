@@ -86,6 +86,11 @@ const ProductSchema = new Schema<IProduct>(
     },
     warranty: { type: String, required: true, trim: true },
     returns: { type: String, required: true, trim: true },
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      ref: "categories",
+      required: true,
+    },
     addedBy: {
       type: Schema.Types.ObjectId,
       ref: "users",

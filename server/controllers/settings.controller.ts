@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { SettingsModel } from "../models/settings.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendResponse } from "../utils/sendResponse.js";
+import { SettingsModel } from "../models/settings.model.js";
 
 /**
  * Get system settings (Public or Protected based on needs, usually Public for cart calculation)
