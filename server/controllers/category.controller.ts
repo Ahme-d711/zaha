@@ -13,6 +13,13 @@ import {
 import ApiFeatures from "../utils/ApiFeatures.js";
 import { validateUserData } from "../schemas/user.schema.js"; // Reuse validation helper
 
+/** Virtual/count refs may name "subcategories", but that model is not always registered — avoid MissingSchemaError */
+async function cascadeSoftDeleteSubcategories(categoryId: mongoose.Types.ObjectId, isDeleted: boolean) {
+  const Sub = mongoose.models.subcategories;
+  if (!Sub) return;
+  await Sub.updateMany({ categoryId }, { isDeleted });
+}
+
 /**
  * Get all categories with filtering, searching, and pagination
  */
@@ -172,11 +179,7 @@ export const deleteCategory = asyncHandler(async (req: Request, res: Response) =
   category.isDeleted = true;
   await category.save();
 
-  // Cascade delete subcategories
-  await mongoose.model("subcategories").updateMany(
-    { categoryId: category._id },
-    { isDeleted: true }
-  );
+  await cascadeSoftDeleteSubcategories(category._id as mongoose.Types.ObjectId, true);
 
   sendResponse(res, 200, {
     success: true,
@@ -203,11 +206,7 @@ export const restoreCategory = asyncHandler(async (req: Request, res: Response) 
   category.isDeleted = false;
   await category.save();
 
-  // Cascade restore subcategories
-  await mongoose.model("subcategories").updateMany(
-    { categoryId: category._id },
-    { isDeleted: false }
-  );
+  await cascadeSoftDeleteSubcategories(category._id as mongoose.Types.ObjectId, false);
 
   sendResponse(res, 200, {
     success: true,

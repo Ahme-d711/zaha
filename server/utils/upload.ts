@@ -127,5 +127,6 @@ export const deleteFile = async (relativePath: string): Promise<void> => {
 // Absolute → Relative (for DB)
 // --------------------------------------------
 export const getRelativePath = (absolutePath: string): string => {
-  return absolutePath.replace(ROOT_UPLOADS + "/", "").replace(/\\/g, "/");
+  const relative = absolutePath.replace(ROOT_UPLOADS + "/", "").replace(/\\/g, "/");
+  return `/uploads/${relative}`;
 };
