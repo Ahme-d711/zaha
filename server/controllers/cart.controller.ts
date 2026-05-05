@@ -8,7 +8,7 @@ import { ICartPopulated, ICartItemPopulated } from "../types/cart.type.js";
 
 const POPULATE_PRODUCT_CONFIG = {
   path: "items.productId",
-  select: "nameAr nameEn price mainImage slug stock sizes descriptionAr descriptionEn",
+  select: "name nameEn nameAr price images mainImage slug stock sizes categoryId description descriptionEn descriptionAr",
 };
 
 /**

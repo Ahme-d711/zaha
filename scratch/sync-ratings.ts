@@ -1,13 +1,17 @@
 import mongoose from "mongoose";
-import { ReviewModel } from "./server/models/review.model.js";
-import { ProductModel } from "./server/models/product.model.js";
+import { ReviewModel } from "../server/models/review.model.js";
+import { ProductModel } from "../server/models/product.model.js";
 import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), "server/.env") });
 
 const syncRatings = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error("MONGODB_URI not found in .env");
+
+    await mongoose.connect(uri);
     console.log("Connected to MongoDB");
 
     const products = await ProductModel.find({});
