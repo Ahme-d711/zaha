@@ -1,12 +1,15 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { productService } from "@/api/product.service";
 import { categoryService } from "@/api/category.service";
 import { ProductCard } from "@/features/products/ProductCard";
-import { SlidersHorizontal, Loader2, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SlidersHorizontal, Loader2, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product } from "@/types/api";
+
+const PAGE_SIZE = 12;
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "rating";
 
@@ -23,11 +26,17 @@ function categoryDisplayName(cat: { name?: string; nameEn?: string }) {
   return label || "Category";
 }
 
+function parsePage(value: string | null): number {
+  const n = parseInt(value ?? "1", 12);
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const selectedCategory = searchParams.get("category") ?? "all";
   const sort = parseSort(searchParams.get("sort"));
+  const page = parsePage(searchParams.get("page"));
 
   const setSelectedCategory = (id: string) => {
     setSearchParams(
@@ -35,6 +44,7 @@ const Products = () => {
         const next = new URLSearchParams(prev);
         if (id === "all") next.delete("category");
         else next.set("category", id);
+        next.delete("page");
         return next;
       },
       { replace: true }
@@ -47,11 +57,28 @@ const Products = () => {
         const next = new URLSearchParams(prev);
         if (nextSort === "featured") next.delete("sort");
         else next.set("sort", nextSort);
+        next.delete("page");
         return next;
       },
       { replace: true }
     );
   };
+
+  const setPage = (nextPage: number) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextPage <= 1) next.delete("page");
+        else next.set("page", String(nextPage));
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page]);
 
   // Fetch Categories
   const { data: categoriesResponse } = useQuery({
@@ -79,18 +106,54 @@ const Products = () => {
     }
   };
 
-  // Fetch Products with filters
+  // Fetch Products with filters + pagination
   const { data: productsResponse, isLoading, isError } = useQuery({
-    queryKey: ["shop-products", selectedCategory, sort],
+    queryKey: ["shop-products", selectedCategory, sort, page],
     queryFn: () =>
       productService.getAll({
         ...(selectedCategory !== "all" ? { categoryId: selectedCategory } : {}),
         sort: getSortString(sort),
-        limit: 100,
+        page,
+        limit: PAGE_SIZE,
       }),
   });
 
   const products = productsResponse?.data?.products ?? [];
+  const pagination = productsResponse?.data?.pagination as
+    | {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+        hasNext?: boolean;
+        hasPrev?: boolean;
+      }
+    | undefined;
+
+  const totalProducts = pagination?.total ?? 0;
+  const totalPages = Math.max(1, pagination?.pages ?? 1);
+  const safePage = Math.min(page, totalPages);
+  const rangeStart = totalProducts === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = totalProducts === 0 ? 0 : Math.min(safePage * PAGE_SIZE, totalProducts);
+  const canPrev = pagination?.hasPrev ?? safePage > 1;
+  const canNext = pagination?.hasNext ?? safePage < totalPages;
+
+  /** If URL page is past the last page (e.g. after filters shrink results), clamp in the address bar */
+  useEffect(() => {
+    if (isLoading || !pagination) return;
+    const maxPage = Math.max(1, pagination.pages || 1);
+    if (page > maxPage) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (maxPage <= 1) next.delete("page");
+          else next.set("page", String(maxPage));
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [isLoading, pagination, page, setSearchParams]);
 
   return (
     <div className="min-h-screen py-8">
@@ -102,7 +165,9 @@ const Products = () => {
         >
           <h1 className="text-3xl sm:text-4xl font-display font-bold mb-2">Shop All</h1>
           <p className="text-muted-foreground mb-8">
-            {products.length} product{products.length !== 1 ? "s" : ""}
+            {totalProducts === 0
+              ? "No products"
+              : `Showing ${rangeStart}–${rangeEnd} of ${totalProducts} product${totalProducts !== 1 ? "s" : ""}`}
           </p>
         </motion.div>
 
@@ -188,6 +253,42 @@ const Products = () => {
           <div className="text-center py-20 text-muted-foreground">
             <p className="text-lg">No products found in this category.</p>
           </div>
+        )}
+
+        {!isLoading && !isError && totalProducts > 0 && totalPages > 1 && (
+          <nav
+            className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
+            aria-label="Product list pagination"
+          >
+            <div className="flex items-center gap-2 order-2 sm:order-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canPrev}
+                onClick={() => setPage(safePage - 1)}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!canNext}
+                onClick={() => setPage(safePage + 1)}
+                className="gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground order-1 sm:order-2">
+              Page <span className="font-medium text-foreground">{safePage}</span> of{" "}
+              <span className="font-medium text-foreground">{totalPages}</span>
+            </p>
+          </nav>
         )}
       </div>
     </div>
