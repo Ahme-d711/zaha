@@ -74,13 +74,13 @@ ReviewSchema.statics.calculateAverageRating = async function (productId: Types.O
 
   if (stats.length > 0) {
     await ProductModel.findByIdAndUpdate(productId, {
-      numReviews: stats[0].numReviews,
-      averageRating: Math.round(stats[0].averageRating * 10) / 10, // Round to 1 decimal
+      reviews_count: stats[0].numReviews,
+      rating: Math.round(stats[0].averageRating * 10) / 10, // Round to 1 decimal
     });
   } else {
     await ProductModel.findByIdAndUpdate(productId, {
-      numReviews: 0,
-      averageRating: 0,
+      reviews_count: 0,
+      rating: 0,
     });
   }
 };
