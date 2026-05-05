@@ -9,18 +9,13 @@ import { slugify } from "../utils/string.utils.js";
  *     Category:
  *       type: object
  *       required:
- *         - nameAr
- *         - nameEn
+ *         - name
  *       properties:
  *         id:
  *           type: string
- *         nameAr:
+ *         name:
  *           type: string
- *         nameEn:
- *           type: string
- *         descriptionAr:
- *           type: string
- *         descriptionEn:
+ *         description:
  *           type: string
  *         slug:
  *           type: string
@@ -34,24 +29,13 @@ import { slugify } from "../utils/string.utils.js";
 
 const CategorySchema = new Schema<ICategory>(
   {
-    nameAr: {
+    name: {
       type: String,
       required: true,
       trim: true,
       maxlength: 100,
     },
-    nameEn: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
-    descriptionAr: {
-      type: String,
-      required: false,
-      trim: true,
-    },
-    descriptionEn: {
+    description: {
       type: String,
       required: false,
       trim: true,
@@ -104,12 +88,12 @@ CategorySchema.virtual("productsCount", {
   localField: "_id",
   foreignField: "categoryId",
   count: true,
-  match: { isDeleted: false, isShow: true },
+  match: { isDeleted: false },
 });
 
-CategorySchema.pre("validate", async function () {
-  if (this.isModified("nameEn")) {
-    const baseSlug = slugify(this.nameEn);
+CategorySchema.pre("validate", async function (this: any) {
+  if (this.isModified("name")) {
+    const baseSlug = slugify(this.name);
     let slug = baseSlug;
     let count = 0;
     
@@ -123,8 +107,7 @@ CategorySchema.pre("validate", async function () {
   }
 });
 
-CategorySchema.index({ nameAr: 1 });
-CategorySchema.index({ nameEn: 1 });
+CategorySchema.index({ name: 1 });
 CategorySchema.index({ isShow: 1 });
 CategorySchema.index({ isDeleted: 1 });
 CategorySchema.index({ priority: -1 });

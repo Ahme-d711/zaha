@@ -27,7 +27,7 @@ export const getAllCategories = asyncHandler(async (req: Request, res: Response)
 
   const apiFeatures = new ApiFeatures(query, validatedQuery as Record<string, unknown>)
     .filter()
-    .search(["nameAr", "nameEn", "slug"])
+    .search(["name", "slug"])
     .paginate();
 
   const { results: categories, pagination } = await apiFeatures.execute();

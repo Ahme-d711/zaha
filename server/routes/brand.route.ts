@@ -94,8 +94,8 @@ router.get("/slug/:slug", getBrandBySlug);
  *           schema:
  *             type: object
  *             properties:
- *               nameAr: { type: string }
- *               nameEn: { type: string }
+ *               name: { type: string }
+ *               description: { type: string }
  *               logo: { type: string, format: binary }
  *     responses:
  *       201:
@@ -129,8 +129,8 @@ router.post(
  *           schema:
  *             type: object
  *             properties:
- *               nameAr: { type: string }
- *               nameEn: { type: string }
+ *               name: { type: string }
+ *               description: { type: string }
  *               logo: { type: string, format: binary }
  *     responses:
  *       200:

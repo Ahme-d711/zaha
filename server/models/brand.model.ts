@@ -9,18 +9,13 @@ import { slugify } from "../utils/string.utils.js";
  *     Brand:
  *       type: object
  *       required:
- *         - nameAr
- *         - nameEn
+ *         - name
  *       properties:
  *         id:
  *           type: string
- *         nameAr:
+ *         name:
  *           type: string
- *         nameEn:
- *           type: string
- *         descriptionAr:
- *           type: string
- *         descriptionEn:
+ *         description:
  *           type: string
  *         slug:
  *           type: string
@@ -32,26 +27,15 @@ import { slugify } from "../utils/string.utils.js";
  *           type: boolean
  */
 
-const BrandSchema = new Schema<IBrand>(
+const BrandSchema = new Schema(
   {
-    nameAr: {
+    name: {
       type: String,
       required: true,
       trim: true,
       maxlength: 100,
     },
-    nameEn: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
-    descriptionAr: {
-      type: String,
-      required: false,
-      trim: true,
-    },
-    descriptionEn: {
+    description: {
       type: String,
       required: false,
       trim: true,
@@ -91,9 +75,9 @@ const BrandSchema = new Schema<IBrand>(
   }
 );
 
-BrandSchema.pre("validate", async function () {
-  if (this.isModified("nameEn")) {
-    const baseSlug = slugify(this.nameEn);
+BrandSchema.pre("validate", async function (this: any) {
+  if (this.isModified("name")) {
+    const baseSlug = slugify(this.name);
     let slug = baseSlug;
     let count = 0;
     
@@ -107,8 +91,7 @@ BrandSchema.pre("validate", async function () {
   }
 });
 
-BrandSchema.index({ nameAr: 1 });
-BrandSchema.index({ nameEn: 1 });
+BrandSchema.index({ name: 1 });
 BrandSchema.index({ isShow: 1 });
 BrandSchema.index({ isDeleted: 1 });
 BrandSchema.index({ priority: -1 });

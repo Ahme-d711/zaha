@@ -1,10 +1,8 @@
 import { z } from "zod";
 
 export const createBrandSchema = z.object({
-  nameAr: z.string().min(1, "Arabic name is required").max(100),
-  nameEn: z.string().min(1, "English name is required").max(100),
-  descriptionAr: z.string().optional(),
-  descriptionEn: z.string().optional(),
+  name: z.string().min(1, "Brand name is required").max(100),
+  description: z.string().optional(),
   priority: z.preprocess(
     (val) => (val === "" ? undefined : Number(val)),
     z.number().int().optional().default(0)

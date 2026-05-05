@@ -1,7 +1,7 @@
 import { type Document } from "mongoose";
 
 
-export const USER_ROLES = ["admin", "user"] as const;
+export const USER_ROLES = ["admin", "user", "vendor"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export interface IUser extends Document {

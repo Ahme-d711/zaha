@@ -1,10 +1,8 @@
 import { type Document } from "mongoose";
 
 export interface IBrand extends Document {
-  nameAr: string;
-  nameEn: string;
-  descriptionAr?: string;
-  descriptionEn?: string;
+  name: string;
+  description?: string;
   priority: number;
   slug: string;
   logo?: string;
