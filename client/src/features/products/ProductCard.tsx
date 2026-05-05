@@ -116,7 +116,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Info */}
         <div className="p-4 flex-1 flex flex-col">
           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">{productCategory}</p>
-          <h3 className="font-medium text-sm leading-snug mb-2 line-clamp-2 group-hover:text-accent transition-colors flex-1">
+          <h3 className="font-medium text-sm leading-snug mb-2 line-clamp-1 group-hover:text-accent transition-colors flex-1">
             {productName}
           </h3>
           <div className="flex items-center gap-1 mb-2">

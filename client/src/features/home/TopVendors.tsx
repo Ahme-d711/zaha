@@ -34,11 +34,7 @@ export function TopVendors() {
   if (vendors.length === 0) return null;
 
   return (
-    <section className="py-24 section-padding bg-secondary/30 relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3" />
-
+    <section className="py-24 section-padding relative overflow-hidden">
       <div className="flex items-end justify-between mb-16 relative z-10">
         <div>
           <h2 className="text-4xl font-display font-bold mb-4 tracking-tight">

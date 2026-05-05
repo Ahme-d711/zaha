@@ -28,6 +28,8 @@
     "build": "npx tsc",
     "start": "node dist/index.js",
     "prod": "npm run build && npm start",
+    "seed:data": "bun scripts/seed-default-data.ts",
+    "seed:reset": "bun scripts/seed-default-data.ts --reset",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:stop": "pm2 stop silver-glow-api",
     "pm2:restart": "pm2 restart silver-glow-api",
