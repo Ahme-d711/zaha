@@ -52,6 +52,7 @@ const productShape = z.object({
   ),
   warranty: z.string().min(1),
   returns: z.string().min(1),
+  categoryId: z.string().min(1),
 });
 
 export const createProductSchema = productShape;

@@ -71,7 +71,7 @@ router.get("/me", getCurrentUser);
  *       201:
  *         description: User created
  */
-router.get("/", authorize("admin"), getAllUsers);
+router.get("/", authorize("admin", "super_admin"), getAllUsers);
 
 /**
  * @swagger
@@ -119,8 +119,8 @@ router.get("/", authorize("admin"), getAllUsers);
  *       200:
  *         description: User deleted
  */
-router.get("/:id", authorize("admin"), getUserById);
-router.post("/", authorize("admin"), uploadUser.single("picture"), createUser);
+router.get("/:id", authorize("admin", "super_admin"), getUserById);
+router.post("/", authorize("admin", "super_admin"), uploadUser.single("picture"), createUser);
 
 /**
  * @swagger
@@ -140,7 +140,7 @@ router.post("/", authorize("admin"), uploadUser.single("picture"), createUser);
  *       200:
  *         description: Block status updated
  */
-router.patch("/:id/block", authorize("admin"), updateUserBlockStatus);
+router.patch("/:id/block", authorize("admin", "super_admin"), updateUserBlockStatus);
 
 /**
  * @swagger
@@ -167,7 +167,7 @@ router.patch("/:id/block", authorize("admin"), updateUserBlockStatus);
  *       200:
  *         description: Balance updated
  */
-router.patch("/:id/balance", authorize("admin"), updateUserBalance);
+router.patch("/:id/balance", authorize("admin", "super_admin"), updateUserBalance);
 
 /**
  * @swagger
@@ -187,7 +187,7 @@ router.patch("/:id/balance", authorize("admin"), updateUserBalance);
  *       200:
  *         description: User activated
  */
-router.patch("/:id/activate", authorize("admin"), activateUser);
+router.patch("/:id/activate", authorize("admin", "super_admin"), activateUser);
 
-router.put("/:id", authorize("admin"), uploadUser.single("picture"), updateUser);
-router.delete("/:id", authorize("admin"), deleteUser);
+router.put("/:id", authorize("admin", "super_admin"), uploadUser.single("picture"), updateUser);
+router.delete("/:id", authorize("admin", "super_admin"), deleteUser);

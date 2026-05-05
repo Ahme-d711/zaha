@@ -104,7 +104,7 @@ router.get("/slug/:slug", getCategoryBySlug);
 router.post(
   "/",
   authenticate,
-  authorize("admin"),
+  authorize("admin", "super_admin"),
   uploadCategory.single("image"),
   createCategory
 );
@@ -139,7 +139,7 @@ router.post(
 router.put(
   "/:id",
   authenticate,
-  authorize("admin"),
+  authorize("admin", "super_admin"),
   uploadCategory.single("image"),
   updateCategory
 );
@@ -162,7 +162,7 @@ router.put(
  *       200:
  *         description: Category deleted
  */
-router.delete("/:id", authenticate, authorize("admin"), deleteCategory);
+router.delete("/:id", authenticate, authorize("admin", "super_admin"), deleteCategory);
 
 /**
  * @swagger
@@ -185,7 +185,7 @@ router.delete("/:id", authenticate, authorize("admin"), deleteCategory);
 router.patch(
   "/:id/restore",
   authenticate,
-  authorize("admin"),
+  authorize("admin", "super_admin"),
   restoreCategory
 );
 
@@ -210,6 +210,6 @@ router.patch(
 router.patch(
   "/:id/toggle-status",
   authenticate,
-  authorize("admin"),
+  authorize("admin", "super_admin"),
   toggleCategoryStatus
 );
