@@ -12,7 +12,8 @@ export interface DashboardStats {
   };
   charts: {
     ordersByCategory: Array<{ nameAr: string; nameEn: string; value: number }>;
-    monthlyRevenue: Array<{ _id: { year: number; month: number }; revenue: number; orders: number }>;
+    /** Last 7 calendar days (UTC), one row per day — delivered order revenue */
+    dailyRevenue: Array<{ date: string; revenue: number; orders: number }>;
     ordersByGovernorate: Array<{ name: string; value: number }>;
   };
   ordersByStatus: Record<string, number>;

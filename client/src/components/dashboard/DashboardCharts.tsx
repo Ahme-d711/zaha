@@ -11,26 +11,33 @@ import {
   Bar,
   Cell
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardStats as StatsData } from "@/api/dashboard.service";
 
 interface DashboardChartsProps {
-  revenueData?: StatsData["charts"]["monthlyRevenue"];
+  revenueData?: StatsData["charts"]["dailyRevenue"];
   categoryData?: StatsData["charts"]["ordersByCategory"];
 }
 
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** Chart label for a YYYY-MM-DD key (UTC) — weekday + day number */
+function formatDayLabel(dateKey: string) {
+  const d = new Date(`${dateKey}T12:00:00.000Z`);
+  return d.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
+}
 
 export const DashboardCharts = ({ revenueData, categoryData }: DashboardChartsProps) => {
-  const formattedRevenue = revenueData?.map(item => ({
-    name: monthNames[item._id.month - 1],
-    value: item.revenue
-  })) || [];
+  const formattedRevenue =
+    revenueData?.map((item) => ({
+      name: formatDayLabel(item.date),
+      value: item.revenue,
+      date: item.date,
+    })) || [];
 
-  const formattedCategories = categoryData?.map(item => ({
-    name: item.nameEn,
-    value: item.value
-  })) || [];
+  const formattedCategories =
+    categoryData?.map((item) => ({
+      name: item.nameEn || item.nameAr || "—",
+      value: item.value,
+    })) || [];
 
   const COLORS = ["#D4AF37", "#1A1A1A", "#71717A", "#A1A1AA", "#22C55E", "#3B82F6"];
   return (
@@ -38,6 +45,7 @@ export const DashboardCharts = ({ revenueData, categoryData }: DashboardChartsPr
       <Card className="glass-card border-border/50">
         <CardHeader>
           <CardTitle className="text-lg font-bold font-playfair tracking-tight">Revenue Overview</CardTitle>
+          <CardDescription>Last 7 days · delivered orders · daily totals</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full">
@@ -69,6 +77,7 @@ export const DashboardCharts = ({ revenueData, categoryData }: DashboardChartsPr
                     border: "none", 
                     boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" 
                   }} 
+                  formatter={(value: number) => [`${value}`, "Revenue"]}
                 />
                 <Area 
                   type="monotone" 
@@ -87,32 +96,40 @@ export const DashboardCharts = ({ revenueData, categoryData }: DashboardChartsPr
       <Card className="glass-card border-border/50">
         <CardHeader>
           <CardTitle className="text-lg font-bold font-playfair tracking-tight">Sales by Category</CardTitle>
+          <CardDescription>
+            Delivered orders · counts each order line toward its product category
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={formattedCategories}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+              <BarChart data={formattedCategories} margin={{ bottom: 8, left: 8, right: 8, top: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.45} />
                 <XAxis 
                   dataKey="name" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: "#888", fontSize: 12 }}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                   dy={10}
+                  interval={0}
+                  angle={formattedCategories.length > 4 ? -20 : 0}
+                  textAnchor={formattedCategories.length > 4 ? "end" : "middle"}
+                  height={formattedCategories.length > 4 ? 56 : 32}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fill: "#888", fontSize: 12 }}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                 />
                 <Tooltip 
-                  cursor={{ fill: "transparent" }}
+                  cursor={{ fill: "rgba(255,255,255,0.06)" }}
                   contentStyle={{ 
-                    backgroundColor: "white", 
+                    backgroundColor: "hsl(var(--card))", 
                     borderRadius: "12px", 
-                    border: "none", 
-                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" 
+                    border: "1px solid hsl(var(--border))", 
+                    color: "hsl(var(--foreground))",
                   }} 
+                  formatter={(value: number) => [value, "Line items"]}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {formattedCategories.map((entry, index) => (

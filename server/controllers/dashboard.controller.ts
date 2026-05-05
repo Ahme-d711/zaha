@@ -27,6 +27,7 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
       { $group: { _id: null, total: { $sum: "$totalAmount" } } },
     ]),
     OrderModel.aggregate([
+      { $match: { status: "DELIVERED" } },
       { $unwind: "$items" },
       {
         $lookup: {
@@ -47,12 +48,20 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
       },
       { $unwind: "$category" },
       {
+        /** Categories store `name` only; legacy nameEn/nameAr may be absent—group by real field */
         $group: {
-          _id: { nameAr: "$category.nameAr", nameEn: "$category.nameEn" },
+          _id: { $ifNull: ["$category.name", "Uncategorized"] },
           value: { $sum: 1 },
         },
       },
-      { $project: { _id: 0, nameAr: "$_id.nameAr", nameEn: "$_id.nameEn", value: 1 } },
+      {
+        $project: {
+          _id: 0,
+          nameEn: "$_id",
+          nameAr: "$_id",
+          value: 1,
+        },
+      },
       { $sort: { value: -1 } },
     ]),
     OrderModel.aggregate([
@@ -85,31 +94,47 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
     }
   });
 
-  // 2. Monthly Revenue (Last 6 months) for Chart
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-  sixMonthsAgo.setDate(1);
-  sixMonthsAgo.setHours(0, 0, 0, 0);
+  // 2. Daily revenue for the last 7 calendar days (UTC) — one point per day for the chart
+  const refNow = new Date();
+  const last7DayKeys: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.UTC(refNow.getUTCFullYear(), refNow.getUTCMonth(), refNow.getUTCDate() - i));
+    last7DayKeys.push(d.toISOString().slice(0, 10));
+  }
+  const weekStartUtc = new Date(`${last7DayKeys[0]}T00:00:00.000Z`);
+  const weekEndUtc = new Date(`${last7DayKeys[6]}T23:59:59.999Z`);
 
-  const monthlyRevenue = await OrderModel.aggregate([
+  const dailyRevenueAgg = await OrderModel.aggregate([
     {
       $match: {
         status: "DELIVERED",
-        createdAt: { $gte: sixMonthsAgo },
+        createdAt: { $gte: weekStartUtc, $lte: weekEndUtc },
       },
     },
     {
       $group: {
         _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
+          $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "UTC" },
         },
         revenue: { $sum: "$totalAmount" },
         orders: { $sum: 1 },
       },
     },
-    { $sort: { "_id.year": 1, "_id.month": 1 } },
   ]);
+  const revenueByDay = new Map(
+    dailyRevenueAgg.map((row: { _id: string; revenue: number; orders: number }) => [
+      row._id,
+      { revenue: row.revenue, orders: row.orders },
+    ])
+  );
+  const dailyRevenue = last7DayKeys.map((date) => {
+    const row = revenueByDay.get(date);
+    return {
+      date,
+      revenue: row?.revenue ?? 0,
+      orders: row?.orders ?? 0,
+    };
+  });
 
   // 3. User Growth (Last 30 days)
   const thirtyDaysAgo = new Date();
@@ -139,7 +164,7 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
       },
       charts: {
         ordersByCategory,
-        monthlyRevenue,
+        dailyRevenue,
         ordersByGovernorate,
       },
       ordersByStatus: statusCounts,

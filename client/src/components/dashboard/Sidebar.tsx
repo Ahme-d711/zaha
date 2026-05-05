@@ -55,11 +55,9 @@ export const Sidebar = () => {
         onConfirm={() => logoutMutation.mutate()}
       />
       <div className="p-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl font-playfair">Z</span>
-          </div>
-          <span className="text-2xl font-bold font-playfair tracking-tight">ZAHA</span>
+        <Link to="/" className="flex items-center gap-0">
+        <img src="/logo.png" alt="Zaha Logo" className="h-16 w-auto" />
+        <span className="font-display text-2xl font-semibold tracking-tight text-accent">Zaha</span>
         </Link>
       </div>
 

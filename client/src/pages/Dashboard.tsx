@@ -50,7 +50,7 @@ const Dashboard = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <DashboardCharts 
-            revenueData={stats?.charts.monthlyRevenue} 
+            revenueData={stats?.charts.dailyRevenue} 
             categoryData={stats?.charts.ordersByCategory} 
           />
         </motion.div>
