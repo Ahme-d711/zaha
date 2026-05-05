@@ -1,5 +1,6 @@
-import React from "react";
-import { Search, Bell, User, Menu } from "lucide-react";
+import React, { useState } from "react";
+import { Search, Bell, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +12,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useLogout } from "@/hooks/use-logout";
 import { useAuthStore } from "@/store/use-auth-store";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 export const DashboardHeader = () => {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const logoutMutation = useLogout();
   const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : "AE";
 
   return (
+    <>
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        onOpenChange={setLogoutConfirmOpen}
+        title="Sign out?"
+        description="You will need to sign in again to use your account."
+        confirmLabel="Sign out"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={logoutMutation.isPending}
+        onConfirm={() => logoutMutation.mutate()}
+      />
     <header className="h-20 bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-30 px-8 flex items-center justify-between">
       <div className="flex items-center gap-4 flex-1">
         <Button variant="ghost" size="icon" className="md:hidden">
@@ -49,7 +68,7 @@ export const DashboardHeader = () => {
                   <p className="text-xs text-muted-foreground mt-1 capitalize">{user?.role || "Administrator"}</p>
                 </div>
                 <Avatar className="w-10 h-10 border border-border">
-                  <AvatarImage src={user?.picture} />
+                  <AvatarImage src={resolveMediaUrl(user?.picture)} />
                   <AvatarFallback className="bg-accent text-white">{initials}</AvatarFallback>
                 </Avatar>
               </div>
@@ -58,14 +77,20 @@ export const DashboardHeader = () => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate("/profile")}>Profile</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate("/dashboard/settings")}>Settings</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate("/dashboard/settings?tab=payments")}>Billing</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={() => setLogoutConfirmOpen(true)}
+            >
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </header>
+    </>
   );
 };

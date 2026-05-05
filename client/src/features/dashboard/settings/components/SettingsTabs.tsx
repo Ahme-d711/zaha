@@ -1,4 +1,5 @@
 import { Bell, Globe, Shield, Wallet } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,13 +7,21 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsFormState } from "./settings.types";
 
+const SETTINGS_TAB_VALUES = ["general", "notifications", "security", "payments"] as const;
+
 interface SettingsTabsProps {
   form: SettingsFormState;
   setForm: React.Dispatch<React.SetStateAction<SettingsFormState>>;
 }
 
-export const SettingsTabs = ({ form, setForm }: SettingsTabsProps) => (
-  <Tabs defaultValue="general" className="w-full">
+export const SettingsTabs = ({ form, setForm }: SettingsTabsProps) => {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const defaultTab =
+    tabParam && (SETTINGS_TAB_VALUES as readonly string[]).includes(tabParam) ? tabParam : "general";
+
+  return (
+    <Tabs key={defaultTab} defaultValue={defaultTab} className="w-full">
     <TabsList className="bg-muted/50 p-1 rounded-xl w-full justify-start overflow-x-auto">
       <TabsTrigger value="general" className="rounded-lg gap-2"><Globe className="w-4 h-4" /> General</TabsTrigger>
       <TabsTrigger value="notifications" className="rounded-lg gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
@@ -69,6 +78,27 @@ export const SettingsTabs = ({ form, setForm }: SettingsTabsProps) => (
           </CardContent>
         </Card>
       </TabsContent>
+      <TabsContent value="security">
+        <Card className="glass-card border-border/50">
+          <CardHeader>
+            <CardTitle className="text-lg">Security</CardTitle>
+            <CardDescription>Session and access policies (more options can be added here).</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">Admin session is protected by your login. Use Profile to update your password when available.</CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="payments">
+        <Card className="glass-card border-border/50">
+          <CardHeader>
+            <CardTitle className="text-lg">Payments &amp; billing</CardTitle>
+            <CardDescription>Store money settings: thresholds, tax, and shipping are under General → Localization.</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Connect payment gateways here in a future update. Currency and tax live in the General tab.
+          </CardContent>
+        </Card>
+      </TabsContent>
     </div>
   </Tabs>
-);
+  );
+};
