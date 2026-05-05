@@ -6,7 +6,7 @@ export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   jwtSecret: process.env.JWT_SECRET || "",
   googleApiKey: process.env.GOOGLE_API_KEY || "AIzaSyA-_aCHOdvzoO2YDMNeqoRhX-onbv2hRVM",
-  frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+  frontendUrl: process.env.FRONTEND_URL || "http://localhost:8080",
   cookieDomain: process.env.COOKIE_DOMAIN || undefined,
   defaultAdminEmail: process.env.DEFAULT_ADMIN_EMAIL || "admin@admin.com",
   defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD || "admin123",

@@ -5,10 +5,10 @@ import AppError from "../errors/AppError.js";
 
 export async function initDefaultAdmin(): Promise<void> {
   try {
-    // Check if any users exist
-    const userCount = await UserModel.countDocuments();
+    // Check if the default admin user exists
+    const adminExists = await UserModel.findOne({ email: env.defaultAdminEmail.toLowerCase() });
 
-    if (userCount === 0) {
+    if (!adminExists) {
       // Validate required environment variables
       if (!env.defaultAdminEmail || !env.defaultAdminPassword) {
         throw new AppError(
@@ -45,7 +45,7 @@ export async function initDefaultAdmin(): Promise<void> {
         );
       }
     } else {
-      console.log(`Users already exist (${userCount} users exist). Skipping admin creation.`);
+      console.log(`Default admin (${env.defaultAdminEmail}) already exists. Skipping creation.`);
     }
   } catch (error) {
     if (error instanceof AppError) {

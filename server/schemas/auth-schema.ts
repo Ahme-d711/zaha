@@ -51,13 +51,19 @@ export const roleSchema = z.enum(USER_ROLES as unknown as [string, ...string[]],
  * Login Schema
  */
 export const loginSchema = z.object({
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
   phone: z
     .string()
     .min(1, "Phone number is required")
     .max(20, "Phone number must be less than 20 characters")
     .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, "Invalid phone number format")
-    .trim(),
+    .trim()
+    .optional()
+    .or(z.literal("")),
   password: z.string().min(1, "Password is required"),
+}).refine(data => data.email || data.phone, {
+  message: "Either email or phone number is required",
+  path: ["email"],
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

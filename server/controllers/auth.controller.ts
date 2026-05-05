@@ -133,16 +133,17 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
  */
 export const login = asyncHandler(async (req: Request, res: Response) => {
   // Validate input data
-  let { phone, password } = validateAuthData(loginSchema, req.body);
+  let { phone, email, password } = validateAuthData(loginSchema, req.body);
 
-  // Strip + if exists
-  phone = phone.replace(/^\+/, "");
+  const query: any = { isActive: true };
+  if (email) {
+    query.email = email;
+  } else if (phone) {
+    query.phone = phone.replace(/^\+/, "");
+  }
 
   // Find user with password field included (only active users)
-  const user = await UserModel.findOne({ 
-    phone,
-    isActive: true, // Only allow active users to login
-  }).select("+password");
+  const user = await UserModel.findOne(query).select("+password");
 
   if (!user || !user.password) {
       throw new AppError("Invalid login credentials", 401);

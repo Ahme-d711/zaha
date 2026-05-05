@@ -18,21 +18,21 @@ export const getCookieOptions = (): CookieOptions => {
   const useHttps = env.useHttps || isProduction;
 
   return {
-    httpOnly: env.cookieHttpOnly, // Configurable via env, default false
-    secure: useHttps, // true for HTTPS, false for HTTP
-    sameSite: useHttps ? "none" : "lax", // "none" requires secure=true for cross-site
+    httpOnly: process.env.COOKIE_HTTP_ONLY !== "false", // Default to true
+    secure: isProduction ? true : useHttps, // Only secure in production or if forced
+    sameSite: isProduction ? "none" : "lax", // Lax is better for localhost dev
     ...(env.cookieDomain && { domain: env.cookieDomain }),
     path: "/",
   };
 };
 
 /**
- * Get cookie options for access token (15 minutes)
+ * Get cookie options for access token (7 days)
  */
 export const getAccessTokenCookieOptions = (): CookieOptions => {
   return {
     ...getCookieOptions(),
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 };
 
