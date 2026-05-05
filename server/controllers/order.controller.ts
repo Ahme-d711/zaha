@@ -15,11 +15,15 @@ import { IProduct } from "../types/product.type.js";
  */
 export const getAllOrders = async (req: Request, res: Response) => {
   const validatedQuery = queryOrderSchema.parse(req.query);
-  const { status, paymentStatus, userId, search, page, limit, startDate, endDate } = validatedQuery;
+  const { status, group, paymentStatus, userId, search, page, limit, startDate, endDate } = validatedQuery;
 
   const query: Record<string, any> = {};
 
-  if (status) query.status = status;
+  if (group === "processing") {
+    query.status = { $in: ["PENDING", "CONFIRMED", "PROCESSING"] };
+  } else if (status) {
+    query.status = status;
+  }
   if (paymentStatus) query.paymentStatus = paymentStatus;
   if (userId) query.userId = userId;
 

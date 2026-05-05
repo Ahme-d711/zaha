@@ -62,11 +62,18 @@ export const updateProductSchema = productShape.partial();
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 
-export const queryProductSchema = z.object({
-  search: z.string().optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(12),
-  sort: z.string().optional(),
-  /** Filter products by category (MongoDB ObjectId string) */
-  categoryId: z.string().optional(),
-});
+export const queryProductSchema = z
+  .object({
+    search: z.string().optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(12),
+    sort: z.string().optional(),
+    /** Filter products by category (MongoDB ObjectId string) */
+    categoryId: z.string().optional(),
+    is_best_seller: z.preprocess(
+      (v) => (v === undefined || v === "" ? undefined : v === "true" || v === true),
+      z.boolean().optional()
+    ),
+  })
+  /** Allow ApiFeatures operator keys e.g. stock[gte], price[gte] */
+  .passthrough();

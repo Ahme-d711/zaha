@@ -7,9 +7,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Loader2, Search, Truck } from "lucide-react";
 import { getOrderStatusColor } from "./orders.types";
 
+export type OrdersStatusTab = "all" | "processing" | "shipped" | "delivered" | "cancelled";
+
 interface OrdersTableProps {
   orders: OrderListItem[];
   search: string;
+  statusTab: OrdersStatusTab;
+  onStatusTabChange: (tab: OrdersStatusTab) => void;
   isLoading: boolean;
   isError: boolean;
   onSearchChange: (value: string) => void;
@@ -20,6 +24,8 @@ interface OrdersTableProps {
 export const OrdersTable = ({
   orders,
   search,
+  statusTab,
+  onStatusTabChange,
   isLoading,
   isError,
   onSearchChange,
@@ -27,13 +33,27 @@ export const OrdersTable = ({
   onEdit,
 }: OrdersTableProps) => (
   <>
-    <Tabs defaultValue="all" className="w-full">
-      <TabsList className="bg-muted/50 p-1 rounded-xl">
-        <TabsTrigger value="all" className="rounded-lg">All Orders</TabsTrigger>
-        <TabsTrigger value="processing" className="rounded-lg">Processing</TabsTrigger>
-        <TabsTrigger value="shipped" className="rounded-lg">Shipped</TabsTrigger>
-        <TabsTrigger value="delivered" className="rounded-lg">Delivered</TabsTrigger>
-        <TabsTrigger value="cancelled" className="rounded-lg">Cancelled</TabsTrigger>
+    <Tabs
+      value={statusTab}
+      onValueChange={(v) => onStatusTabChange(v as OrdersStatusTab)}
+      className="w-full"
+    >
+      <TabsList className="bg-muted/50 p-1 rounded-xl flex flex-wrap h-auto gap-1">
+        <TabsTrigger value="all" className="rounded-lg">
+          All Orders
+        </TabsTrigger>
+        <TabsTrigger value="processing" className="rounded-lg">
+          Processing
+        </TabsTrigger>
+        <TabsTrigger value="shipped" className="rounded-lg">
+          Shipped
+        </TabsTrigger>
+        <TabsTrigger value="delivered" className="rounded-lg">
+          Delivered
+        </TabsTrigger>
+        <TabsTrigger value="cancelled" className="rounded-lg">
+          Cancelled
+        </TabsTrigger>
       </TabsList>
     </Tabs>
     <Card className="glass-card border-border/50">
@@ -76,7 +96,22 @@ export const OrdersTable = ({
                   <td className="py-4"><Badge variant="secondary" className={`${getOrderStatusColor(order.status)} border-none`}>{order.status}</Badge></td>
                   <td className="py-4 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Update Status" onClick={() => onEdit(order._id, order.status)}><Truck className="w-4 h-4 text-accent" /></Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="View order"
+                        onClick={() => onView(order._id)}
+                      >
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Update status"
+                        onClick={() => onEdit(order._id, order.status)}
+                      >
+                        <Truck className="w-4 h-4 text-accent" />
+                      </Button>
                     </div>
                   </td>
                 </tr>

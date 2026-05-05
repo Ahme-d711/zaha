@@ -118,7 +118,7 @@ export const ProductFormDialog = ({
               <option value="">Select category</option>
               {categories.map((category) => (
                 <option key={category._id} value={category._id}>
-                  {(category as { name?: string; nameEn?: string }).name ?? category.nameEn}
+                  {(category as { name?: string; nameEn?: string }).name}
                 </option>
               ))}
             </select>

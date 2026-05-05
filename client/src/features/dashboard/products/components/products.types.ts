@@ -51,3 +51,5 @@ export const defaultProductFormState: ProductFormState = {
   categoryId: "",
   isShow: true,
 };
+
+export type DashboardProductFilterTab = "all" | "bestseller" | "in_stock" | "out_of_stock";

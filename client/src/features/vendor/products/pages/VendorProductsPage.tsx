@@ -32,6 +32,7 @@ export const VendorProductsPage = () => {
         <ProductsTable
           products={products}
           search={search}
+          showFilters={false}
           isLoading={isLoading}
           isError={isError}
           onSearchChange={setSearch}

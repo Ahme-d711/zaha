@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -7,7 +7,11 @@ import { ProductDetailsDialog } from "../components/ProductDetailsDialog";
 import { ProductFormDialog } from "../components/ProductFormDialog";
 import { ProductsHeader } from "../components/ProductsHeader";
 import { ProductsTable } from "../components/ProductsTable";
-import { ProductFormState, defaultProductFormState } from "../components/products.types";
+import {
+  ProductFormState,
+  defaultProductFormState,
+  type DashboardProductFilterTab,
+} from "../components/products.types";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const toPayload = (form: ProductFormState, mainImageFile: File | null, galleryFiles: File[], id?: string) => {
@@ -60,6 +64,9 @@ const toPayload = (form: ProductFormState, mainImageFile: File | null, galleryFi
 
 export const ProductsPage = () => {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterTab, setFilterTab] = useState<DashboardProductFilterTab>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -73,9 +80,26 @@ export const ProductsPage = () => {
   const [productIdPendingDelete, setProductIdPendingDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const productsQueryParams = useMemo(() => {
+    const p: Parameters<typeof dashboardManagementService.getProducts>[0] = {
+      limit: 50,
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(categoryFilter ? { categoryId: categoryFilter } : {}),
+    };
+    if (filterTab === "bestseller") p.is_best_seller = true;
+    if (filterTab === "in_stock") p.stockGte = 1;
+    if (filterTab === "out_of_stock") p.stock = 0;
+    return p;
+  }, [debouncedSearch, filterTab, categoryFilter]);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["dashboard-products", search],
-    queryFn: () => dashboardManagementService.getProducts({ search, limit: 50 }),
+    queryKey: ["dashboard-products", debouncedSearch, filterTab, categoryFilter],
+    queryFn: () => dashboardManagementService.getProducts(productsQueryParams),
   });
   const categoriesQuery = useQuery({
     queryKey: ["dashboard-product-categories"],
@@ -254,6 +278,11 @@ export const ProductsPage = () => {
         <ProductsTable
           products={products}
           search={search}
+          filterTab={filterTab}
+          onFilterTabChange={setFilterTab}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          categories={categories}
           isLoading={isLoading}
           isError={isError}
           onSearchChange={setSearch}

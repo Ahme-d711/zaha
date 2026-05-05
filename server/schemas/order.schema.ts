@@ -60,6 +60,8 @@ export const updateOrderStatusSchema = z.object({
 
 export const queryOrderSchema = z.object({
   status: orderStatusSchema.optional(),
+  /** When "processing", backend matches PENDING | CONFIRMED | PROCESSING */
+  group: z.enum(["processing"]).optional(),
   paymentStatus: paymentStatusSchema.optional(),
   userId: z.string().optional(),
   search: z.string().optional(),

@@ -1,24 +1,51 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { dashboardManagementService } from "@/api/dashboard-management.service";
 import { OrderDetailsDialog } from "../components/OrderDetailsDialog";
 import { OrdersHeader } from "../components/OrdersHeader";
 import { OrderStatusDialog } from "../components/OrderStatusDialog";
-import { OrdersTable } from "../components/OrdersTable";
+import { OrdersTable, type OrdersStatusTab } from "../components/OrdersTable";
 import { defaultOrderStatusFormState } from "../components/orders.types";
+import { downloadOrdersCsv, printOrdersShippingLabels } from "../utils/order-export";
+
+function buildOrdersQueryParams(
+  debouncedSearch: string,
+  tab: OrdersStatusTab
+): Parameters<typeof dashboardManagementService.getOrders>[0] {
+  const params: Parameters<typeof dashboardManagementService.getOrders>[0] = { limit: 50 };
+  if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+  if (tab === "processing") params.group = "processing";
+  else if (tab === "shipped") params.status = "SHIPPED";
+  else if (tab === "delivered") params.status = "DELIVERED";
+  else if (tab === "cancelled") params.status = "CANCELLED";
+  return params;
+}
 
 export const OrdersPage = () => {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [statusTab, setStatusTab] = useState<OrdersStatusTab>("all");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [status, setStatus] = useState(defaultOrderStatusFormState.status);
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const queryParams = useMemo(
+    () => buildOrdersQueryParams(debouncedSearch, statusTab),
+    [debouncedSearch, statusTab]
+  );
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["dashboard-orders", search],
-    queryFn: () => dashboardManagementService.getOrders({ search, limit: 50 }),
+    queryKey: ["dashboard-orders", debouncedSearch, statusTab],
+    queryFn: () => dashboardManagementService.getOrders(queryParams),
   });
   const orders = data?.data?.orders ?? [];
 
@@ -38,15 +65,42 @@ export const OrdersPage = () => {
         queryClient.invalidateQueries({ queryKey: ["dashboard-order", selectedOrderId] });
       }
     },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      toast.error(error.response?.data?.message ?? "Failed to update status");
+    },
   });
+
+  const handleExportCsv = useCallback(() => {
+    if (orders.length === 0) {
+      toast.message("No orders to export");
+      return;
+    }
+    downloadOrdersCsv(orders);
+    toast.success("CSV downloaded");
+  }, [orders]);
+
+  const handlePrintLabels = useCallback(() => {
+    if (orders.length === 0) {
+      toast.message("No orders to print");
+      return;
+    }
+    const ok = printOrdersShippingLabels(orders);
+    if (!ok) toast.error("Could not open print window — check popup settings");
+  }, [orders]);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <OrdersHeader />
+        <OrdersHeader
+          onExportCsv={handleExportCsv}
+          onPrintLabels={handlePrintLabels}
+          actionsDisabled={isLoading || orders.length === 0}
+        />
         <OrdersTable
           orders={orders}
           search={search}
+          statusTab={statusTab}
+          onStatusTabChange={setStatusTab}
           isLoading={isLoading}
           isError={isError}
           onSearchChange={setSearch}

@@ -42,6 +42,9 @@ export interface OrderListItem {
   _id: string;
   trackingNumber?: string;
   recipientName: string;
+  recipientPhone?: string;
+  shippingAddress?: string;
+  city?: string;
   createdAt: string;
   totalAmount: number;
   paymentStatus: string;
@@ -66,11 +69,24 @@ interface Pagination {
 }
 
 export const dashboardManagementService = {
-  getProducts: async (params?: { search?: string; page?: number; limit?: number }) => {
-    return apiClient.get<
-      unknown,
-      ApiResponse<{ products: ProductListItem[]; pagination: Pagination }>
-    >(ENDPOINTS.PRODUCTS.LIST, { params });
+  getProducts: async (params?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    categoryId?: string;
+    is_best_seller?: boolean;
+    /** stock >= n (sent as stock[gte] for ApiFeatures) */
+    stockGte?: number;
+    /** exact stock match */
+    stock?: number;
+  }) => {
+    const { stockGte, ...rest } = params ?? {};
+    const axiosParams: Record<string, unknown> = { ...rest };
+    if (stockGte !== undefined) axiosParams["stock[gte]"] = stockGte;
+    return apiClient.get<unknown, ApiResponse<{ products: ProductListItem[]; pagination: Pagination }>>(
+      ENDPOINTS.PRODUCTS.LIST,
+      { params: axiosParams }
+    );
   },
 
   getProductById: async (id: string) => {
@@ -155,7 +171,14 @@ export const dashboardManagementService = {
     return apiClient.delete<unknown, ApiResponse<null>>(`${ENDPOINTS.CATEGORIES.LIST}/${id}`);
   },
 
-  getOrders: async (params?: { search?: string; page?: number; limit?: number; status?: string }) => {
+  getOrders: async (params?: {
+    search?: string;
+    page?: number;
+    limit?: number;
+    status?: string;
+    /** Backend: PENDING | CONFIRMED | PROCESSING when filtering “Processing” tab */
+    group?: "processing";
+  }) => {
     return apiClient.get<
       unknown,
       ApiResponse<{ orders: OrderListItem[]; pagination: Pagination }>

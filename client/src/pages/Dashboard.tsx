@@ -34,16 +34,6 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold font-playfair tracking-tight">Dashboard Overview</h1>
             <p className="text-muted-foreground mt-1">Welcome back, here's what's happening today.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="flex items-center gap-2 border-border/50">
-              <Download className="w-4 h-4" />
-              Export Data
-            </Button>
-            <Button className="flex items-center gap-2 bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20">
-              <Plus className="w-4 h-4" />
-              New Product
-            </Button>
-          </div>
         </div>
 
         <motion.div
