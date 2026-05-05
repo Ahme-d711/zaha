@@ -62,6 +62,7 @@ const ProductSchema = new Schema<IProduct>(
   {
     id: { type: String, required: true, unique: true, trim: true },
     name: { type: String, required: true, trim: true, maxlength: 200 },
+    description: { type: String, default: "", trim: true, maxlength: 5000 },
     price: { type: Number, required: true, min: 0 },
     old_price: { type: Number, required: true, min: 0 },
     discount_percentage: { type: Number, required: true, min: 0, max: 100 },
@@ -135,6 +136,22 @@ ProductSchema.virtual("nameAr")
   })
   .set(function (this: IProduct, value: string) {
     this.name = value;
+  });
+
+ProductSchema.virtual("descriptionEn")
+  .get(function (this: IProduct) {
+    return this.description ?? "";
+  })
+  .set(function (this: IProduct, value: string) {
+    this.description = value;
+  });
+
+ProductSchema.virtual("descriptionAr")
+  .get(function (this: IProduct) {
+    return this.description ?? "";
+  })
+  .set(function (this: IProduct, value: string) {
+    this.description = value;
   });
 
 ProductSchema.virtual("mainImage")

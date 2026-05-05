@@ -6,6 +6,9 @@ export interface ProductListItem {
   _id: string;
   nameEn: string;
   nameAr: string;
+  description?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
   price: number;
   stock: number;
   isShow: boolean;

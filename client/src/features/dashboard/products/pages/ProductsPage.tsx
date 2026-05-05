@@ -25,6 +25,7 @@ const toPayload = (form: ProductFormState, mainImageFile: File | null, galleryFi
   payload.append("old_price", String(form.originalPrice));
   payload.append("discount_percentage", String(Math.max(discountPercentage, 0)));
   payload.append("categoryId", form.categoryId);
+  payload.append("description", form.descriptionEn.trim() || form.description.trim());
   // Rating and reviews are computed by backend logic.
   payload.append("rating", "0");
   payload.append("reviews_count", "0");
@@ -210,6 +211,9 @@ export const ProductsPage = () => {
           main?: string;
           gallery?: string[];
         };
+        description?: string;
+        descriptionEn?: string;
+        descriptionAr?: string;
       };
 
       const resolvedCategoryId =
@@ -217,11 +221,20 @@ export const ProductsPage = () => {
           ? product.categoryId
           : product?.categoryId?._id ?? "";
 
+      const desc =
+        product?.descriptionEn?.trim() ||
+        product?.description?.trim() ||
+        product?.descriptionAr?.trim() ||
+        "";
+
       setForm({
         ...defaultProductFormState,
         name: product?.name ?? product?.nameEn ?? "",
         nameEn: product?.nameEn ?? product?.name ?? "",
         nameAr: product?.nameAr ?? product?.name ?? "",
+        description: desc,
+        descriptionEn: desc,
+        descriptionAr: desc,
         price: product?.price ?? 0,
         originalPrice: product?.old_price ?? 0,
         stock: product?.stock ?? 0,

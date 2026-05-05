@@ -12,6 +12,10 @@ const parseJsonString = <T>(val: unknown, fallback: T): T => {
 const productShape = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(200),
+  description: z.preprocess(
+    (val) => (val === undefined || val === null ? "" : String(val)),
+    z.string().max(5000)
+  ),
   price: z.coerce.number().min(0),
   old_price: z.coerce.number().min(0),
   discount_percentage: z.coerce.number().min(0).max(100),

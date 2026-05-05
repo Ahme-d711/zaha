@@ -86,6 +86,30 @@ const productTemplates = [
   { id: "prod_010", name: "Premium Phone Case", category: "Accessories", price: 29, old_price: 39, discount_percentage: 26, stock: 250, is_best_seller: false, battery_life: "N/A", noise_cancelling: false, audio: ["Shock Proof"], free_shipping: false, shipping_condition: "Standard shipping", warranty: "6 months", returns: "14 days" },
 ];
 
+/** Short catalog copy for product detail pages (seed / demos). */
+const PRODUCT_DESCRIPTIONS: Record<string, string> = {
+  prod_001:
+    "Premium wireless headphones with adaptive noise cancellation, plush ear cushions, and up to 30 hours of playback for travel and focused work.",
+  prod_002:
+    "Studio-oriented closed-back headphones tuned for flat, accurate monitoring—ideal for mixing, mastering, and critical listening sessions.",
+  prod_003:
+    "Compact Bluetooth speaker with deep bass and stereo imaging. IP-rated durability and long battery life for parties and outdoor use.",
+  prod_004:
+    "Room-filling home speaker with rich lows and clear highs. Designed for movies, music, and smart-home voice control in larger spaces.",
+  prod_005:
+    "Advanced health and fitness tracking with AMOLED display, GPS, and multi-day battery. Swim-ready build with comprehensive workout modes.",
+  prod_006:
+    "Lightweight smartwatch focused on daily activity, sleep insights, and notifications—with exceptional battery life for all-week wear.",
+  prod_007:
+    "Mechanical gaming keyboard with tactile switches, per-key RGB, and durable construction for competitive play and long typing sessions.",
+  prod_008:
+    "Ergonomic wireless gaming mouse with precise sensor, low-latency connectivity, and long battery life—tuned for FPS and MOBA sessions.",
+  prod_009:
+    "Compact USB-C fast charger with power delivery for phones, tablets, and laptops. Foldable prongs and smart temperature protection.",
+  prod_010:
+    "Slim protective case with shock-absorbing corners and raised edges. Wireless charging compatible with a comfortable, grippy finish.",
+};
+
 function toSlug(value: string) {
   return value
     .toLowerCase()
@@ -339,6 +363,7 @@ async function seed() {
       {
         id: p.id,
         name: p.name,
+        description: PRODUCT_DESCRIPTIONS[p.id] ?? "",
         price: p.price,
         old_price: p.old_price,
         discount_percentage: p.discount_percentage,

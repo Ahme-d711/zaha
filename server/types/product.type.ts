@@ -19,6 +19,8 @@ export interface ProductShipping {
 export interface IProduct extends Document {
   id: string;
   name: string;
+  /** Primary product copy shown on detail pages */
+  description: string;
   price: number;
   old_price: number;
   discount_percentage: number;
@@ -39,6 +41,8 @@ export interface IProduct extends Document {
   // Legacy compatibility fields used in older controllers.
   nameEn?: string;
   nameAr?: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
   mainImage?: string;
   isShow?: boolean;
   averageRating?: number;

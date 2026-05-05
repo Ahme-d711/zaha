@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { ProductFormState } from "./products.types";
 import { CategoryListItem } from "@/api/dashboard-management.service";
 import { resolveMediaUrl } from "@/lib/media-url";
@@ -122,6 +123,21 @@ export const ProductFormDialog = ({
                 </option>
               ))}
             </select>
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Description</Label>
+            <Textarea
+              value={form.descriptionEn}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  descriptionEn: e.target.value,
+                  description: e.target.value,
+                }))
+              }
+              placeholder="Short product description for the storefront detail page"
+              rows={4}
+            />
           </div>
           <div className="space-y-2">
             <Label>Price</Label>
